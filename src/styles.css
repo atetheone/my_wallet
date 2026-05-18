@@ -1,0 +1,247 @@
+/* Functional baseline only. Visual design comes from the Claude design pass
+   (see DESIGN-PROMPT). Intentionally minimal. */
+:root {
+  --bg: #0f1115;
+  --card: #1a1d24;
+  --fg: #f2f4f8;
+  --muted: #8a90a0;
+  --accent: #3ddc97;
+  --danger: #ff5d5d;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.4 system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+main {
+  flex: 1;
+  padding-bottom: 72px;
+}
+.screen {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.screen.center {
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+.screen.scroll {
+  overflow-y: auto;
+}
+h1 {
+  font-size: 22px;
+}
+h2 {
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 13px;
+}
+input,
+button {
+  font: inherit;
+}
+input {
+  background: var(--card);
+  border: 1px solid #2a2e38;
+  color: var(--fg);
+  padding: 12px;
+  border-radius: 10px;
+  width: 100%;
+}
+label {
+  font-size: 13px;
+  color: var(--muted);
+}
+button {
+  background: var(--card);
+  color: var(--fg);
+  border: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+}
+button.primary {
+  background: var(--accent);
+  color: #06281c;
+  font-weight: 700;
+}
+button.big {
+  padding: 18px;
+  font-size: 18px;
+}
+button.link {
+  background: none;
+  color: var(--danger);
+  padding: 6px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.actions button {
+  flex: 1;
+}
+.hero {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.hero.danger .hero-amount {
+  color: var(--danger);
+}
+.hero-label {
+  color: var(--muted);
+  font-size: 14px;
+}
+.hero-amount {
+  font-size: 38px;
+  font-weight: 800;
+}
+.hero-sub {
+  color: var(--muted);
+}
+.warn {
+  color: var(--danger);
+  font-size: 13px;
+}
+.ok {
+  color: var(--accent);
+}
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.bar {
+  height: 8px;
+  background: #2a2e38;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+}
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.key {
+  padding: 20px;
+  font-size: 22px;
+  background: var(--card);
+}
+.amount-display {
+  font-size: 40px;
+  font-weight: 800;
+  text-align: center;
+  padding: 24px 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip,
+.seg button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--card);
+}
+.chip.on,
+.seg button.on {
+  background: var(--accent);
+  color: #06281c;
+}
+.seg {
+  display: flex;
+  gap: 8px;
+}
+.seg button {
+  flex: 1;
+}
+.pin-dots {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+}
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+}
+.dot.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.shake {
+  animation: shake 0.4s;
+}
+@keyframes shake {
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
+  }
+}
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--card);
+  border-top: 1px solid #2a2e38;
+}
+.tabbar button {
+  flex: 1;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 14px 0;
+}
+.tabbar button.on {
+  color: var(--accent);
+}
+.brand {
+  display: none;
+}
