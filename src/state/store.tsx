@@ -15,17 +15,32 @@ import {
   getSettings,
   periodTotals,
   listGoals,
+  categoryBreakdown,
   type Settings,
   type Goal,
+  type CategoryTotal,
 } from "../db/repo";
 import { periodFor, daysRemaining } from "../lib/period";
 import { computeSafeToSpend, type SafeToSpendResult } from "../lib/safeToSpend";
+import type { XOF } from "../lib/money";
 
 interface Snapshot {
   settings: Settings;
   safe: SafeToSpendResult;
   goals: Goal[];
   periodDays: number;
+  /** Variable spending logged so far this period. */
+  spent: XOF;
+  /** Money budgeted for spending this period (income − savings − fixed). */
+  budget: XOF;
+  /** Whole days left in the period (>= 1). */
+  daysRemaining: number;
+  /** e.g. "mai 2026" — the current period's month. */
+  monthLabel: string;
+  /** e.g. "31 mai" — last spendable day of the period. */
+  periodEndLabel: string;
+  /** Category totals for the current period, biggest first. */
+  breakdown: CategoryTotal[];
 }
 
 interface Store {
@@ -50,16 +65,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const now = new Date();
     const totals = await periodTotals(now, settings.salary_day);
     const goals = await listGoals();
-    const { totalDays } = periodFor(now, settings.salary_day);
+    const breakdown = await categoryBreakdown(now, settings.salary_day);
+    const { totalDays, end } = periodFor(now, settings.salary_day);
+    const left = daysRemaining(now, settings.salary_day);
     const safe = computeSafeToSpend({
       fixedIncome: settings.fixed_income,
       extraIncomeReceived: totals.extraIncome,
       savingsCommitment: settings.savings_commitment,
       fixedCostsTotal: totals.fixedCostsTotal,
       spentThisPeriod: totals.spent,
-      daysRemaining: daysRemaining(now, settings.salary_day),
+      daysRemaining: left,
     });
-    return { settings, safe, goals, periodDays: totalDays };
+    const budget =
+      settings.fixed_income +
+      Math.max(0, totals.extraIncome) -
+      settings.savings_commitment -
+      totals.fixedCostsTotal;
+    // Last spendable day = day before the exclusive period end.
+    const lastDay = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+    const monthLabel = now.toLocaleDateString("fr-FR", {
+      month: "long",
+      year: "numeric",
+    });
+    const periodEndLabel = lastDay.toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+    });
+    return {
+      settings,
+      safe,
+      goals,
+      periodDays: totalDays,
+      spent: totals.spent,
+      budget,
+      daysRemaining: left,
+      monthLabel,
+      periodEndLabel,
+      breakdown,
+    };
   }
 
   async function reload() {

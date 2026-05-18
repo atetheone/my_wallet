@@ -1,12 +1,115 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useStore } from "../state/store";
 import { updateSettings } from "../db/repo";
 import { parseXOF } from "../lib/money";
+import { fmtN } from "../ui/format";
 import { sha256 } from "../lib/hash";
 import { downloadBackup, importJSON, type Backup } from "../sync/backup";
 import { syncConfigured, signInWithEmail, currentEmail } from "../sync/supabase";
 import { sync } from "../sync/engine";
+import { Icon, type IconName } from "../ui/Icon";
 import { t } from "../i18n";
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: 18 }}>
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: "var(--x-ink-3)",
+          padding: "0 18px 8px",
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          background: "var(--x-paper)",
+          border: "1px solid var(--x-line)",
+          borderRadius: 18,
+          overflow: "hidden",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Row({
+  icon,
+  label,
+  value,
+  danger,
+  last,
+  onClick,
+}: {
+  icon: IconName;
+  label: string;
+  value?: string;
+  danger?: boolean;
+  last?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        width: "100%",
+        padding: "13px 14px",
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        borderBottom: last ? "none" : "1px solid var(--x-line)",
+        textAlign: "left",
+        fontFamily: "var(--x-font-body)",
+      }}
+    >
+      <span
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 10,
+          background: danger ? "rgba(200,75,49,0.12)" : "var(--x-cream-2)",
+          color: danger ? "var(--x-clay)" : "var(--x-ink-2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <Icon name={icon} size={16} stroke={1.7} />
+      </span>
+      <span
+        style={{
+          flex: 1,
+          fontSize: 14,
+          fontWeight: 500,
+          color: danger ? "var(--x-clay)" : "var(--x-ink)",
+        }}
+      >
+        {label}
+      </span>
+      {value && (
+        <span style={{ fontSize: 13, color: "var(--x-ink-3)" }}>{value}</span>
+      )}
+      {!danger && (
+        <Icon
+          name="chevron-right"
+          size={16}
+          stroke={1.6}
+          color="var(--x-ink-4)"
+        />
+      )}
+    </button>
+  );
+}
 
 export function Settings() {
   const { snap, reload } = useStore();
@@ -17,6 +120,7 @@ export function Settings() {
   const [email, setEmail] = useState("");
   const [who, setWho] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (snap) {
@@ -34,7 +138,8 @@ export function Settings() {
       savings_commitment: parseXOF(savings),
     });
     await reload();
-    setMsg("OK");
+    setEditing(false);
+    setMsg(t("saved"));
   }
 
   async function onImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -43,7 +148,7 @@ export function Settings() {
     const data = JSON.parse(await f.text()) as Backup;
     await importJSON(data);
     await reload();
-    setMsg("Importé");
+    setMsg(t("imported"));
   }
 
   async function setPin() {
@@ -51,53 +156,271 @@ export function Settings() {
     if (!p) return;
     await updateSettings({ pin_hash: await sha256(p) });
     await reload();
-    setMsg("OK");
+    setMsg(t("saved"));
   }
 
+  const synced = syncConfigured && who;
+
   return (
-    <div className="screen scroll">
-      <h1>{t("settings")}</h1>
-
-      <label>{t("obIncome")}</label>
-      <input
-        inputMode="numeric"
-        value={income}
-        onChange={(e) => setIncome(e.target.value)}
-      />
-      <label>{t("obSalaryDay")}</label>
-      <input
-        inputMode="numeric"
-        value={salaryDay}
-        onChange={(e) => setSalaryDay(e.target.value)}
-      />
-      <label>{t("obSavings")}</label>
-      <input
-        inputMode="numeric"
-        value={savings}
-        onChange={(e) => setSavings(e.target.value)}
-      />
-      <button className="primary" onClick={saveBudget}>
-        {t("save")}
-      </button>
-
-      <h2>{t("setPin")}</h2>
-      <div className="actions">
-        <button onClick={setPin}>{t("setPin")}</button>
-        <button
-          className="link"
-          onClick={async () => {
-            await updateSettings({ pin_hash: null });
-            await reload();
-          }}
-        >
-          {t("removePin")}
-        </button>
+    <div className="x-screen">
+      <div
+        style={{
+          padding: "calc(14px + env(safe-area-inset-top,0px)) 22px 4px",
+        }}
+      >
+        <div className="x-display" style={{ fontSize: 28, fontWeight: 600 }}>
+          {t("settings")}
+        </div>
       </div>
 
-      <h2>{t("exportData")}</h2>
-      <div className="actions">
-        <button onClick={downloadBackup}>{t("exportData")}</button>
-        <button onClick={() => file.current?.click()}>{t("importData")}</button>
+      <div className="x-body" style={{ padding: "6px 14px 20px" }}>
+        {/* cloud sync card */}
+        <div
+          className="x-card"
+          style={{
+            padding: "16px 18px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              background: synced
+                ? "rgba(92,127,60,0.16)"
+                : "var(--x-cream-2)",
+              color: synced ? "var(--x-sage)" : "var(--x-ink-3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icon name={synced ? "cloud-check" : "cloud"} size={22} stroke={1.7} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>
+              {synced
+                ? t("synced")
+                : syncConfigured
+                  ? t("notSignedIn")
+                  : t("syncOff")}
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: "var(--x-ink-3)",
+                marginTop: 2,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {synced ? who : t("syncOffHint")}
+            </div>
+          </div>
+          {synced && (
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "4px 8px",
+                background: "rgba(92,127,60,0.16)",
+                color: "var(--x-sage)",
+                borderRadius: 999,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+              }}
+            >
+              {t("online")}
+            </div>
+          )}
+        </div>
+
+        {/* account */}
+        <div style={{ marginTop: 18 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 18px 8px",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--x-ink-3)",
+              }}
+            >
+              {t("accountGroup")}
+            </span>
+            <button
+              onClick={() => setEditing((v) => !v)}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--x-saffron-deep)",
+                cursor: "pointer",
+              }}
+            >
+              {editing ? t("cancel") : t("edit")}
+            </button>
+          </div>
+          <div
+            style={{
+              background: "var(--x-paper)",
+              border: "1px solid var(--x-line)",
+              borderRadius: 18,
+              overflow: "hidden",
+            }}
+          >
+            {!editing ? (
+              <>
+                <Row
+                  icon="mail"
+                  label={t("obIncome")}
+                  value={`${fmtN(snap?.settings.fixed_income ?? 0)} FCFA`}
+                  onClick={() => setEditing(true)}
+                />
+                <Row
+                  icon="calendar"
+                  label={t("obSalaryDay")}
+                  value={`${t("dayOf")} ${snap?.settings.salary_day ?? 1}`}
+                  onClick={() => setEditing(true)}
+                />
+                <Row
+                  icon="sparkle"
+                  label={t("obSavings")}
+                  value={`${fmtN(snap?.settings.savings_commitment ?? 0)} FCFA`}
+                  last
+                  onClick={() => setEditing(true)}
+                />
+              </>
+            ) : (
+              <div
+                style={{
+                  padding: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <div className="x-label">{t("obIncome")}</div>
+                <input
+                  className="x-input x-num"
+                  inputMode="numeric"
+                  value={income}
+                  onChange={(e) => setIncome(e.target.value)}
+                />
+                <div className="x-label">{t("obSalaryDay")}</div>
+                <input
+                  className="x-input x-num"
+                  inputMode="numeric"
+                  value={salaryDay}
+                  onChange={(e) => setSalaryDay(e.target.value)}
+                />
+                <div className="x-label">{t("obSavings")}</div>
+                <input
+                  className="x-input x-num"
+                  inputMode="numeric"
+                  value={savings}
+                  onChange={(e) => setSavings(e.target.value)}
+                />
+                <button
+                  className="x-btn"
+                  style={{ width: "100%" }}
+                  onClick={saveBudget}
+                >
+                  {t("save")}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Group title={t("securityGroup")}>
+          <Row icon="lock" label={t("setPin")} onClick={setPin} />
+          <Row
+            icon="shield"
+            label={t("removePin")}
+            last
+            onClick={async () => {
+              await updateSettings({ pin_hash: null });
+              await reload();
+              setMsg(t("saved"));
+            }}
+          />
+        </Group>
+
+        <Group title={t("dataGroup")}>
+          <Row
+            icon="export"
+            label={t("exportData")}
+            onClick={() => downloadBackup()}
+          />
+          <Row
+            icon="import"
+            label={t("importData")}
+            last
+            onClick={() => file.current?.click()}
+          />
+        </Group>
+
+        {syncConfigured && (
+          <Group title={t("cloudGroup")}>
+            {!who ? (
+              <div
+                style={{
+                  padding: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <input
+                  className="x-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email"
+                />
+                <button
+                  className="x-btn x-btn-ghost"
+                  style={{ width: "100%" }}
+                  onClick={async () => {
+                    await signInWithEmail(email);
+                    setMsg(t("linkSent"));
+                  }}
+                >
+                  <Icon name="mail" size={18} stroke={1.8} /> {t("signIn")}
+                </button>
+              </div>
+            ) : (
+              <Row
+                icon="cloud-check"
+                label={t("syncNow")}
+                last
+                onClick={async () => {
+                  try {
+                    const r = await sync();
+                    setMsg(`↑${r.pushed} ↓${r.pulled}`);
+                    await reload();
+                  } catch (err) {
+                    setMsg(err instanceof Error ? err.message : "Erreur");
+                  }
+                }}
+              />
+            )}
+          </Group>
+        )}
+
         <input
           ref={file}
           type="file"
@@ -105,50 +428,32 @@ export function Settings() {
           hidden
           onChange={onImport}
         />
-      </div>
 
-      <h2>{t("sync")}</h2>
-      {!syncConfigured && <p className="muted">Sync non configurée</p>}
-      {syncConfigured && (
-        <>
-          {who ? (
-            <p className="muted">
-              {t("signedInAs")} {who}
-            </p>
-          ) : (
-            <div className="actions">
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email"
-              />
-              <button
-                onClick={async () => {
-                  await signInWithEmail(email);
-                  setMsg("Lien envoyé");
-                }}
-              >
-                {t("signIn")}
-              </button>
-            </div>
-          )}
-          <button
-            onClick={async () => {
-              try {
-                const r = await sync();
-                setMsg(`↑${r.pushed} ↓${r.pulled}`);
-                await reload();
-              } catch (err) {
-                setMsg(err instanceof Error ? err.message : "Erreur");
-              }
+        {msg && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "16px 20px 0",
+              fontSize: 13,
+              color: "var(--x-sage)",
+              fontWeight: 600,
             }}
           >
-            {t("syncNow")}
-          </button>
-        </>
-      )}
+            {msg}
+          </div>
+        )}
 
-      {msg && <p className="ok">{msg}</p>}
+        <div
+          style={{
+            textAlign: "center",
+            padding: "24px 20px 0",
+            fontSize: 11,
+            color: "var(--x-ink-4)",
+          }}
+        >
+          {t("appName")} · {t("versionLine")}
+        </div>
+      </div>
     </div>
   );
 }

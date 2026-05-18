@@ -1,247 +1,343 @@
-/* Functional baseline only. Visual design comes from the Claude design pass
-   (see DESIGN-PROMPT). Intentionally minimal. */
+/* Xaalis — design system (ported from the Claude design pass).
+   Warm West-African modernist: cream/sand canvas, deep ink, saffron primary,
+   terracotta + sage accents. Bricolage Grotesque display · Instrument Sans
+   body · JetBrains Mono tabular for FCFA amounts.
+   This is a real PWA, so the prototype's fake phone chrome (status bar /
+   gesture pill / canvas frame) is intentionally dropped. */
+
 :root {
-  --bg: #0f1115;
-  --card: #1a1d24;
-  --fg: #f2f4f8;
-  --muted: #8a90a0;
-  --accent: #3ddc97;
-  --danger: #ff5d5d;
+  /* surfaces */
+  --x-cream: #f2ede3;
+  --x-cream-2: #ece4d4;
+  --x-paper: #fbf8f1;
+  --x-ink: #1a1611;
+  --x-ink-2: #3a3329;
+  --x-ink-3: #7a6f5e;
+  --x-ink-4: #b0a593;
+  --x-line: rgba(26, 22, 17, 0.08);
+  --x-line-2: rgba(26, 22, 17, 0.14);
+
+  /* accents */
+  --x-saffron: #e89b3a;
+  --x-saffron-deep: #c77a1b;
+  --x-clay: #c84b31;
+  --x-sage: #5c7f3c;
+  --x-indigo: #2e3a78;
+  --x-wave: #00bfff;
+
+  /* radii */
+  --x-r-sm: 8px;
+  --x-r-md: 14px;
+  --x-r-lg: 22px;
+  --x-r-xl: 28px;
+
+  /* type */
+  --x-font-display: "Bricolage Grotesque", "Söhne", system-ui, sans-serif;
+  --x-font-body: "Instrument Sans", "Söhne", system-ui, sans-serif;
+  --x-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --x-tabbar-h: 64px;
 }
+
 * {
   box-sizing: border-box;
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
 html,
 body,
 #root {
   height: 100%;
 }
+
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font: 16px/1.4 system-ui, sans-serif;
+  background: var(--x-cream);
+  color: var(--x-ink);
+  font-family: var(--x-font-body);
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
   -webkit-tap-highlight-color: transparent;
 }
-.app {
+
+/* App shell — mobile-first, centred on wider review screens (iPad). */
+.app,
+.app-shell {
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  background: var(--x-cream);
 }
+
 main {
   flex: 1;
-  padding-bottom: 72px;
-}
-.screen {
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  min-height: 0;
+  padding-bottom: calc(var(--x-tabbar-h) + env(safe-area-inset-bottom, 0px));
 }
-.screen.center {
+
+/* When a screen is shown without the tabbar (lock, onboarding, quick-add). */
+.app-shell.no-tabbar main {
+  padding-bottom: 0;
+}
+
+.brand {
+  display: none;
+}
+
+/* ── typographic helpers ─────────────────────────────────────── */
+.x-num {
+  font-family: var(--x-font-mono);
+  font-feature-settings: "tnum" 1, "zero" 0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.x-display {
+  font-family: var(--x-font-display);
+  letter-spacing: -0.03em;
+}
+
+/* ── scroll surfaces ─────────────────────────────────────────── */
+.x-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.x-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* A full-screen column: header area + scroll body. */
+.x-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.x-body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.x-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── buttons ─────────────────────────────────────────────────── */
+.x-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  gap: 10px;
+  padding: 16px 22px;
+  border-radius: 999px;
+  background: var(--x-ink);
+  color: var(--x-paper);
+  font-family: var(--x-font-body);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  border: none;
+  cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 6px 18px rgba(26, 22, 17, 0.18);
+  transition: transform 0.1s ease;
 }
-.screen.scroll {
-  overflow-y: auto;
+.x-btn:active {
+  transform: translateY(1px);
 }
-h1 {
-  font-size: 22px;
+.x-btn:disabled {
+  opacity: 0.5;
 }
-h2 {
-  font-size: 15px;
-  color: var(--muted);
-  margin-top: 12px;
+.x-btn.x-btn-saffron {
+  background: var(--x-saffron);
+  color: var(--x-ink);
 }
-.muted {
-  color: var(--muted);
+.x-btn.x-btn-ghost {
+  background: transparent;
+  color: var(--x-ink);
+  box-shadow: inset 0 0 0 1.5px var(--x-line-2);
 }
-.small {
-  font-size: 13px;
+
+/* ── card ────────────────────────────────────────────────────── */
+.x-card {
+  background: var(--x-paper);
+  border-radius: var(--x-r-lg);
+  border: 1px solid var(--x-line);
+  padding: 18px;
 }
+
+/* ── chip ────────────────────────────────────────────────────── */
+.x-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--x-cream-2);
+  color: var(--x-ink-2);
+}
+.x-chip.wave {
+  background: rgba(0, 191, 255, 0.12);
+  color: #0086b8;
+}
+.x-chip.cash {
+  background: rgba(92, 127, 60, 0.14);
+  color: var(--x-sage);
+}
+
+/* ── progress bar ────────────────────────────────────────────── */
+.x-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--x-cream-2);
+  overflow: hidden;
+}
+.x-bar > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--x-ink);
+  border-radius: 999px;
+  display: block;
+  transition: width 0.4s ease;
+}
+
+/* ── PIN dots ────────────────────────────────────────────────── */
+.x-pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.6px solid var(--x-ink-3);
+  transition: all 0.2s;
+}
+.x-pin-dot.filled {
+  background: var(--x-ink);
+  border-color: var(--x-ink);
+  transform: scale(1.05);
+}
+@keyframes xshake {
+  10%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  80% {
+    transform: translateX(4px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-6px);
+  }
+  40%,
+  60% {
+    transform: translateX(6px);
+  }
+}
+.x-shake {
+  animation: xshake 0.4s;
+}
+
+/* ── icon base ───────────────────────────────────────────────── */
+.x-icon {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── bottom navigation ───────────────────────────────────────── */
+.x-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: var(--x-paper);
+  border-top: 1px solid var(--x-line);
+  padding: 10px 8px calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 20;
+}
+.x-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--x-ink-3);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--x-font-body);
+}
+.x-tab.active {
+  color: var(--x-ink);
+}
+
+/* native inputs reset to the warm system */
 input,
+textarea,
 button {
   font: inherit;
 }
-input {
-  background: var(--card);
-  border: 1px solid #2a2e38;
-  color: var(--fg);
-  padding: 12px;
-  border-radius: 10px;
+.x-input {
   width: 100%;
+  background: var(--x-paper);
+  border: 1px solid var(--x-line);
+  color: var(--x-ink);
+  padding: 14px 16px;
+  border-radius: var(--x-r-md);
+  font-family: var(--x-font-body);
 }
-label {
-  font-size: 13px;
-  color: var(--muted);
+.x-input::placeholder {
+  color: var(--x-ink-4);
 }
-button {
-  background: var(--card);
-  color: var(--fg);
-  border: 0;
-  padding: 12px 16px;
-  border-radius: 10px;
+.x-input:focus {
+  outline: none;
+  border-color: var(--x-saffron);
 }
-button.primary {
-  background: var(--accent);
-  color: #06281c;
-  font-weight: 700;
+.x-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--x-ink-3);
 }
-button.big {
-  padding: 18px;
-  font-size: 18px;
-}
-button.link {
-  background: none;
-  color: var(--danger);
-  padding: 6px;
-}
-.actions {
-  display: flex;
-  gap: 8px;
-}
-.actions button {
+
+/* boot / error fallback */
+.x-center {
   flex: 1;
-}
-.hero {
-  background: var(--card);
-  border-radius: 18px;
-  padding: 28px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
   align-items: center;
-}
-.hero.danger .hero-amount {
-  color: var(--danger);
-}
-.hero-label {
-  color: var(--muted);
-  font-size: 14px;
-}
-.hero-amount {
-  font-size: 38px;
-  font-weight: 800;
-}
-.hero-sub {
-  color: var(--muted);
-}
-.warn {
-  color: var(--danger);
-  font-size: 13px;
-}
-.ok {
-  color: var(--accent);
-}
-.card {
-  background: var(--card);
-  border-radius: 14px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: center;
   gap: 10px;
+  min-height: 100vh;
+  color: var(--x-ink-3);
 }
-.bar {
-  height: 8px;
-  background: #2a2e38;
-  border-radius: 5px;
-  overflow: hidden;
-}
-.bar-fill {
-  height: 100%;
-  background: var(--accent);
-}
-.keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.key {
-  padding: 20px;
-  font-size: 22px;
-  background: var(--card);
-}
-.amount-display {
-  font-size: 40px;
-  font-weight: 800;
-  text-align: center;
-  padding: 24px 0;
-}
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.chip,
-.seg button {
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: var(--card);
-}
-.chip.on,
-.seg button.on {
-  background: var(--accent);
-  color: #06281c;
-}
-.seg {
-  display: flex;
-  gap: 8px;
-}
-.seg button {
-  flex: 1;
-}
-.pin-dots {
-  display: flex;
-  gap: 16px;
-  margin: 24px 0;
-}
-.dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid var(--muted);
-}
-.dot.on {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.shake {
-  animation: shake 0.4s;
-}
-@keyframes shake {
-  25% {
-    transform: translateX(-8px);
-  }
-  75% {
-    transform: translateX(8px);
-  }
-}
-.tabbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  background: var(--card);
-  border-top: 1px solid #2a2e38;
-}
-.tabbar button {
-  flex: 1;
-  background: none;
-  color: var(--muted);
+.x-warn {
+  color: var(--x-clay);
   font-size: 13px;
-  padding: 14px 0;
-}
-.tabbar button.on {
-  color: var(--accent);
-}
-.brand {
-  display: none;
 }

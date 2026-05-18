@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useStore } from "./state/store";
 import { useRoute, navigate } from "./lib/router";
 import { t } from "./i18n";
+import { Icon, type IconName } from "./ui/Icon";
+import { wipeDatabase } from "./db/sqlite";
 import { Lock } from "./screens/Lock";
 import { Onboarding } from "./screens/Onboarding";
 import { Home } from "./screens/Home";
@@ -10,12 +12,11 @@ import { History } from "./screens/History";
 import { Goals } from "./screens/Goals";
 import { Settings } from "./screens/Settings";
 
-const NAV: { r: Parameters<typeof navigate>[0]; label: string }[] = [
-  { r: "home", label: "Accueil" },
-  { r: "add", label: "+" },
-  { r: "history", label: "Historique" },
-  { r: "goals", label: "Objectifs" },
-  { r: "settings", label: "Réglages" },
+const TABS: { r: "home" | "history" | "goals" | "settings"; label: string; icon: IconName }[] = [
+  { r: "home", label: "Accueil", icon: "home" },
+  { r: "history", label: "Historique", icon: "history" },
+  { r: "goals", label: "Objectifs", icon: "goals" },
+  { r: "settings", label: "Réglages", icon: "settings" },
 ];
 
 export function App() {
@@ -30,18 +31,76 @@ export function App() {
       navigate("onboarding");
   }, [ready, snap, onboarded, route]);
 
-  if (!ready) return <div className="screen center">…</div>;
-  if (error)
+  if (!ready)
     return (
-      <div className="screen center">
-        <p className="warn">Erreur: {error}</p>
+      <div className="app-shell no-tabbar">
+        <div className="x-center x-display" style={{ fontSize: 32 }}>
+          {t("appName")}
+        </div>
       </div>
     );
-  if (locked) return <Lock />;
-  if (!onboarded) return <Onboarding />;
+  if (error)
+    return (
+      <div className="app-shell no-tabbar">
+        <div className="x-center" style={{ padding: "0 32px", gap: 18 }}>
+          <div
+            className="x-display"
+            style={{ fontSize: 22, fontWeight: 600, color: "var(--x-ink)" }}
+          >
+            Base de données illisible
+          </div>
+          <p className="x-warn" style={{ textAlign: "center" }}>
+            {error}
+          </p>
+          <p
+            style={{
+              fontSize: 13,
+              color: "var(--x-ink-3)",
+              textAlign: "center",
+              lineHeight: 1.5,
+            }}
+          >
+            Vous pouvez réinitialiser la base locale. Toutes les données de cet
+            appareil seront effacées.
+          </p>
+          <button
+            className="x-btn"
+            onClick={async () => {
+              try {
+                await wipeDatabase();
+              } finally {
+                location.reload();
+              }
+            }}
+          >
+            Réinitialiser la base de données
+          </button>
+          <button
+            className="x-btn x-btn-ghost"
+            onClick={() => location.reload()}
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  if (locked)
+    return (
+      <div className="app-shell no-tabbar">
+        <Lock />
+      </div>
+    );
+  if (!onboarded)
+    return (
+      <div className="app-shell no-tabbar">
+        <Onboarding />
+      </div>
+    );
+
+  const fullscreen = route === "add";
 
   return (
-    <div className="app">
+    <div className={"app-shell" + (fullscreen ? " no-tabbar" : "")}>
       <main>
         {route === "home" && <Home />}
         {route === "add" && <QuickAdd />}
@@ -50,18 +109,25 @@ export function App() {
         {route === "settings" && <Settings />}
         {route === "onboarding" && <Home />}
       </main>
-      <nav className="tabbar">
-        {NAV.map((n) => (
-          <button
-            key={n.r}
-            className={route === n.r ? "on" : ""}
-            onClick={() => navigate(n.r)}
-            aria-label={n.label}
-          >
-            {n.label}
-          </button>
-        ))}
-      </nav>
+      {!fullscreen && (
+        <nav className="x-tabbar">
+          {TABS.map((tab) => (
+            <button
+              key={tab.r}
+              className={"x-tab" + (route === tab.r ? " active" : "")}
+              onClick={() => navigate(tab.r)}
+              aria-label={tab.label}
+            >
+              <Icon
+                name={tab.icon}
+                size={22}
+                stroke={route === tab.r ? 1.9 : 1.5}
+              />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
       <span className="brand">{t("appName")}</span>
     </div>
   );

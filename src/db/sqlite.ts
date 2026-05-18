@@ -103,6 +103,22 @@ async function getDb() {
   return dbPromise;
 }
 
+/**
+ * Last-resort recovery: drop the entire IndexedDB-backed database and forget
+ * the cached connection. Used by the boot-failure screen when the on-device
+ * store is corrupt/unreadable (classic "disk I/O error" on a half-written
+ * IDBBatchAtomicVFS). Destructive: all local data is lost. Caller reloads.
+ */
+export function wipeDatabase(): Promise<void> {
+  dbPromise = null;
+  return new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase("xaalis");
+    req.onsuccess = () => resolve();
+    req.onblocked = () => resolve(); // completes once the page reloads
+    req.onerror = () => reject(req.error ?? new Error("deleteDatabase failed"));
+  });
+}
+
 // ---- unguarded workers (assume the serialization lock is held) -----------
 
 async function execRaw(sql: string): Promise<void> {
