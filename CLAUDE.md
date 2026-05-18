@@ -42,11 +42,19 @@ Full design rationale: `/home/atomic/.claude/plans/we-can-still-change-foamy-hoa
 
 ## Gotchas (learned the hard way)
 
-- **OPFS VFS must be main-thread-safe.** `AccessHandlePoolVFS` uses
-  `createSyncAccessHandle()`, which only exists in a Web Worker — it throws
-  `createSyncAccessHandle is not a function` on the window thread. We use the
-  **async build** (`wa-sqlite-async.mjs`) + `OriginPrivateFileSystemVFS`
-  instead. Do not switch back to the sync VFS unless moving the DB into a Worker.
+- **DB VFS must be main-thread-safe — and in wa-sqlite@1.0.0 that rules out
+  OPFS entirely.** Both OPFS VFSes (`AccessHandlePoolVFS` *and*
+  `OriginPrivateFileSystemVFS`) call `createSyncAccessHandle()`, which only
+  exists in a dedicated Web Worker — on the window thread it throws
+  `createSyncAccessHandle is not a function` (caught in first device test;
+  OPFS was never actually browser-verified). We use the **async build**
+  (`wa-sqlite-async.mjs`) + **`IDBBatchAtomicVFS`** (IndexedDB, fully async,
+  durable). Do not switch to any OPFS VFS unless the DB moves into a Worker.
+- **`IDBBatchAtomicVFS` needs `locking_mode=exclusive` + `journal_mode=MEMORY`,
+  set right after open** (`src/db/sqlite.ts`). It commits atomically via
+  IndexedDB and can't use an on-disk rollback journal; without these the first
+  `BEGIN/COMMIT` (the schema migration) fails with a generic `disk I/O error`.
+  Exclusive locking must be set *before* the journal_mode change for it to take.
 - The async (Asyncify) wasm is ~1.1 MB; `maximumFileSizeToCacheInBytes` in
   `vite.config.ts` is raised so Workbox precaches it. Keep that bump.
 - `wa-sqlite` is untyped ESM — types are hand-declared in `src/wa-sqlite.d.ts`
