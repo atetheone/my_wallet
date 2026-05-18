@@ -43,9 +43,37 @@ export async function downloadBackup(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+// Allowed columns per sync table. Column AND table names are interpolated
+// into SQL (identifiers cannot be parameterized) and the rows come from an
+// imported JSON file, so both must be validated against this whitelist —
+// never trust keys off the parsed backup.
+const TABLE_COLUMNS: Record<SyncTable, ReadonlySet<string>> = {
+  settings: new Set([
+    "id", "fixed_income", "salary_day", "savings_commitment", "pin_hash",
+    "language", "onboarded", "updated_at", "deleted",
+  ]),
+  categories: new Set([
+    "id", "name", "is_preset", "sort", "updated_at", "deleted",
+  ]),
+  expenses: new Set([
+    "id", "date", "amount", "category_id", "method", "note", "receipt",
+    "updated_at", "deleted",
+  ]),
+  income_extra: new Set([
+    "id", "date", "amount", "note", "updated_at", "deleted",
+  ]),
+  fixed_costs: new Set([
+    "id", "label", "amount", "day_of_month", "updated_at", "deleted",
+  ]),
+  goals: new Set([
+    "id", "name", "target_amount", "target_date", "allocation", "saved",
+    "updated_at", "deleted",
+  ]),
+};
+
 /** Upsert a row only when the incoming `updated_at` is newer (LWW). */
 async function upsertNewer(
-  table: string,
+  table: SyncTable,
   row: Record<string, unknown>,
 ): Promise<void> {
   const id = row.id;
@@ -57,7 +85,10 @@ async function upsertNewer(
   const incoming = Number(row.updated_at ?? 0);
   if (existing[0] && incoming <= existing[0].updated_at) return;
 
-  const cols = Object.keys(row);
+  // Drop any key not in the schema; a corrupt/hostile file can't inject SQL.
+  const allowed = TABLE_COLUMNS[table];
+  const cols = Object.keys(row).filter((c) => allowed.has(c));
+  if (!cols.includes("id")) return;
   const placeholders = cols.map(() => "?").join(", ");
   const updates = cols.map((c) => `${c} = excluded.${c}`).join(", ");
   await run(

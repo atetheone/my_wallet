@@ -72,8 +72,24 @@ export async function getSettings(): Promise<Settings> {
   );
 }
 
+// Whitelist of columns updateSettings may write. Column names are
+// string-interpolated into SQL (cannot be parameterized), so they must never
+// come unchecked from a caller-supplied object.
+const SETTINGS_COLUMNS: ReadonlySet<keyof Settings> = new Set([
+  "fixed_income",
+  "salary_day",
+  "savings_commitment",
+  "pin_hash",
+  "language",
+  "onboarded",
+]);
+
 export async function updateSettings(patch: Partial<Settings>): Promise<void> {
-  const cols = Object.keys(patch);
+  const cols = Object.keys(patch) as (keyof Settings)[];
+  const unknown = cols.filter((c) => !SETTINGS_COLUMNS.has(c));
+  if (unknown.length) {
+    throw new Error(`updateSettings: unknown column(s): ${unknown.join(", ")}`);
+  }
   if (!cols.length) return;
   const set = cols.map((c) => `${c} = ?`).join(", ");
   const vals = cols.map((c) => (patch as Record<string, unknown>)[c] as never);

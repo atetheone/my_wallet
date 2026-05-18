@@ -6,9 +6,12 @@ declare module "wa-sqlite/dist/wa-sqlite-async.mjs" {
 declare module "wa-sqlite" {
   export function Factory(module: unknown): unknown;
 }
-declare module "wa-sqlite/src/examples/OriginPrivateFileSystemVFS.js" {
-  export class OriginPrivateFileSystemVFS {
-    constructor();
+declare module "wa-sqlite/src/examples/IDBBatchAtomicVFS.js" {
+  export class IDBBatchAtomicVFS {
+    constructor(
+      idbDatabaseName?: string,
+      options?: { durability?: "default" | "strict" | "relaxed" },
+    );
     readonly name: string;
     close(): Promise<void>;
   }

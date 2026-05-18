@@ -9,7 +9,7 @@
  * singleton rather than its own table — simpler, same behaviour.
  */
 
-import { all, run, tx } from "./sqlite";
+import { all, exec, run, tx } from "./sqlite";
 
 const MIGRATIONS: string[] = [
   // v1 — initial schema
@@ -95,18 +95,41 @@ async function userVersion(): Promise<number> {
   return rows[0]?.user_version ?? 0;
 }
 
+/** True if a base table from the v1 baseline schema is already present. */
+async function baselineApplied(): Promise<boolean> {
+  const rows = await all<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='settings';",
+  );
+  return (rows[0]?.n ?? 0) > 0;
+}
+
 /** Apply any pending migrations, then ensure singleton + preset rows exist. */
 export async function migrate(): Promise<void> {
-  const current = await userVersion();
+  let current = await userVersion();
+  // Self-heal a stranded DB: an older build bumped user_version *outside* the
+  // migration tx, so a half-failed run could commit the v1 DDL but never
+  // record the version, leaving user_version=0 with the tables already there.
+  // Re-running migration v0 then throws "table settings already exists". If
+  // the baseline schema is present, adopt it as v1 instead of re-creating it.
+  if (current === 0 && (await baselineApplied())) {
+    await run("PRAGMA user_version = 1;");
+    current = 1;
+  }
   for (let v = current; v < MIGRATIONS.length; v++) {
     await tx(async () => {
-      for (const part of MIGRATIONS[v].split(";")) {
-        const sql = part.trim();
-        if (sql) await run(sql);
-      }
+      // Run the whole migration script in one go. wa-sqlite's statements()
+      // parser handles the ";"-separated statements, comments and blank lines
+      // itself; the previous manual `.split(";")` produced malformed fragments
+      // (e.g. comment-only / empty) that threw SQLITE_MISUSE "not a statement".
+      await exec(MIGRATIONS[v]);
+      // Bump the version inside the same transaction. PRAGMA user_version is
+      // transactional (db-header write, rolled back with the tx), so the DDL
+      // and the version bump commit atomically — either both land or neither.
+      // Doing it outside the tx is what stranded a half-migrated DB at v0,
+      // causing "table settings already exists" on every reload.
+      // PRAGMA can't be parameterised; version is a trusted integer.
+      await run(`PRAGMA user_version = ${v + 1};`);
     });
-    // PRAGMA can't be parameterised; version is a trusted integer.
-    await run(`PRAGMA user_version = ${v + 1};`);
   }
   await seed();
 }
