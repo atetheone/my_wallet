@@ -116,6 +116,12 @@ export const fr = {
   linkSent: "Lien envoyé",
   versionLine: "version 1.0.0 · « xaalis » signifie argent en wolof",
 
+  // modals
+  confirm: "Confirmer",
+  topUpTitle: "Ajouter au pot",
+  deleteGoalTitle: "Supprimer l'objectif ?",
+  pinTitle: "Nouveau code",
+
   // generic
   required: "Requis",
   back: "Retour",

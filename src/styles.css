@@ -326,6 +326,71 @@ button {
   color: var(--x-ink-3);
 }
 
+/* ── shared screen patterns (extracted from per-screen inline styles) ── */
+/* Tracked uppercase "eyebrow" label above titles / above grouped rows. */
+.x-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--x-ink-3);
+}
+/* The 28px screen heading at the top of each screen. */
+.x-screen-title {
+  font-family: var(--x-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+/* Rounded icon container. Width/height/border-radius + accent colours stay
+   inline at call sites (sizes vary 32–44, accents vary). */
+.x-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--x-cream-2);
+  color: var(--x-ink-2);
+}
+
+/* ── modal (in-app replacement for native prompt/confirm) ───────────── */
+.x-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(26, 22, 17, 0.42);
+  animation: xfade 0.18s ease;
+}
+.x-modal {
+  width: 100%;
+  max-width: 360px;
+  background: var(--x-paper);
+  border: 1px solid var(--x-line);
+  border-radius: var(--x-r-lg);
+  padding: 22px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 12px 40px rgba(26, 22, 17, 0.28);
+  animation: xpop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes xfade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes xpop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
 /* boot / error fallback */
 .x-center {
   flex: 1;

@@ -96,15 +96,7 @@ export function QuickAdd() {
       </div>
 
       <div style={{ textAlign: "center", padding: "24px 12px 8px" }}>
-        <div
-          style={{
-            fontSize: 11,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: "var(--x-ink-3)",
-            fontWeight: 600,
-          }}
-        >
+        <div className="x-eyebrow" style={{ letterSpacing: "0.16em" }}>
           {t("amount")}
         </div>
         <div

@@ -75,24 +75,13 @@ export function History() {
           padding: "calc(14px + env(safe-area-inset-top,0px)) 22px 6px",
         }}
       >
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--x-ink-3)",
-          }}
-        >
+        <div className="x-eyebrow">
           {t("history")} ·{" "}
           <span style={{ textTransform: "capitalize" }}>
             {snap?.monthLabel}
           </span>
         </div>
-        <div
-          className="x-display"
-          style={{ fontSize: 28, fontWeight: 600, marginTop: 4 }}
-        >
+        <div className="x-screen-title" style={{ marginTop: 4 }}>
           <span className="x-num">{fmtN(total)}</span>{" "}
           <span style={{ fontSize: 16, color: "var(--x-ink-3)" }}>FCFA</span>
         </div>
@@ -161,14 +150,10 @@ export function History() {
           groups.map((g) => (
             <div key={g.key} style={{ marginTop: 12 }}>
               <div
+                className="x-eyebrow"
                 style={{
                   position: "sticky",
                   top: 0,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--x-ink-3)",
                   padding: "6px 8px",
                   background: "var(--x-cream)",
                   display: "flex",
@@ -209,16 +194,13 @@ export function History() {
                       }}
                     >
                       <div
+                        className="x-icon-circle"
                         style={{
                           width: 38,
                           height: 38,
                           borderRadius: 12,
                           background: m.bg,
                           color: m.fg,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
                         }}
                       >
                         <Icon name={m.icon} size={18} stroke={1.7} />
@@ -304,17 +286,7 @@ export function History() {
             }}
           >
             <div className="x-card" style={{ padding: 16 }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--x-ink-3)",
-                }}
-              >
-                {t("distribution")}
-              </div>
+              <div className="x-eyebrow">{t("distribution")}</div>
               <div
                 style={{
                   display: "flex",
@@ -353,15 +325,13 @@ export function History() {
                     }}
                   >
                     <div
+                      className="x-icon-circle"
                       style={{
                         width: 40,
                         height: 40,
                         borderRadius: 12,
                         background: m.bg,
                         color: m.fg,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                       }}
                     >
                       <Icon name={m.icon} size={20} stroke={1.7} />

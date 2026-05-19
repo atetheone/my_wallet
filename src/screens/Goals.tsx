@@ -10,6 +10,7 @@ import {
 import { formatXOF, parseXOF } from "../lib/money";
 import { fmtN } from "../ui/format";
 import { Icon } from "../ui/Icon";
+import { Modal } from "../ui/Modal";
 import { t } from "../i18n";
 
 export function Goals() {
@@ -18,6 +19,9 @@ export function Goals() {
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [date, setDate] = useState("");
+  const [topUpFor, setTopUpFor] = useState<Goal | null>(null);
+  const [topUpVal, setTopUpVal] = useState("");
+  const [deleteFor, setDeleteFor] = useState<Goal | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
   const commitment = snap?.settings.savings_commitment ?? 0;
@@ -44,12 +48,23 @@ export function Goals() {
     await reload();
   }
 
-  async function topUp(g: Goal) {
-    const v = prompt(
-      `${g.name} — ${t("remaining")} ${formatXOF(g.target_amount - g.saved)}`,
-    );
-    if (v == null) return;
-    await updateGoalSaved(g.id, g.saved + parseXOF(v));
+  function topUp(g: Goal) {
+    setTopUpVal("");
+    setTopUpFor(g);
+  }
+
+  async function confirmTopUp() {
+    if (!topUpFor) return;
+    await updateGoalSaved(topUpFor.id, topUpFor.saved + parseXOF(topUpVal));
+    setTopUpFor(null);
+    await refresh();
+    await reload();
+  }
+
+  async function confirmDelete() {
+    if (!deleteFor) return;
+    await deleteGoal(deleteFor.id);
+    setDeleteFor(null);
     await refresh();
     await reload();
   }
@@ -89,21 +104,8 @@ export function Goals() {
         }}
       >
         <div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "var(--x-ink-3)",
-            }}
-          >
-            {t("myGoals")}
-          </div>
-          <div
-            className="x-display"
-            style={{ fontSize: 28, fontWeight: 600, marginTop: 4 }}
-          >
+          <div className="x-eyebrow">{t("myGoals")}</div>
+          <div className="x-screen-title" style={{ marginTop: 4 }}>
             {t("savingsWord")}
           </div>
         </div>
@@ -262,17 +264,8 @@ export function Goals() {
                   }}
                 >
                   <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      background: "var(--x-cream-2)",
-                      color: "var(--x-ink-2)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
+                    className="x-icon-circle"
+                    style={{ width: 44, height: 44, borderRadius: 14 }}
                   >
                     <Icon name="goals" size={20} stroke={1.7} />
                   </div>
@@ -294,13 +287,7 @@ export function Goals() {
                     </div>
                   </div>
                   <button
-                    onClick={async () => {
-                      if (confirm(`${t("delete")} — ${g.name} ?`)) {
-                        await deleteGoal(g.id);
-                        await refresh();
-                        await reload();
-                      }
-                    }}
+                    onClick={() => setDeleteFor(g)}
                     aria-label={t("delete")}
                     style={{
                       background: "transparent",
@@ -454,15 +441,8 @@ export function Goals() {
             style={{ display: "flex", alignItems: "center", gap: 10 }}
           >
             <span
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 10,
-                background: "var(--x-cream-2)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className="x-icon-circle"
+              style={{ width: 32, height: 32, borderRadius: 10 }}
             >
               <Icon name="sparkle" size={16} stroke={1.7} />
             </span>
@@ -499,6 +479,45 @@ export function Goals() {
           </button>
         </div>
       </div>
+
+      <Modal
+        open={topUpFor != null}
+        title={t("topUpTitle")}
+        subtitle={
+          topUpFor
+            ? `${topUpFor.name} — ${t("remaining")} ${formatXOF(
+                topUpFor.target_amount - topUpFor.saved,
+              )}`
+            : undefined
+        }
+        confirmLabel={t("confirm")}
+        confirmDisabled={parseXOF(topUpVal) <= 0}
+        onConfirm={confirmTopUp}
+        onClose={() => setTopUpFor(null)}
+      >
+        <input
+          className="x-input x-num"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="0 FCFA"
+          value={
+            topUpVal
+              ? `${formatXOF(parseXOF(topUpVal), { suffix: false })} FCFA`
+              : ""
+          }
+          onChange={(e) => setTopUpVal(e.target.value.replace(/[^\d]/g, ""))}
+        />
+      </Modal>
+
+      <Modal
+        open={deleteFor != null}
+        title={t("deleteGoalTitle")}
+        subtitle={deleteFor?.name}
+        confirmLabel={t("delete")}
+        destructive
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteFor(null)}
+      />
     </div>
   );
 }

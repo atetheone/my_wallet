@@ -8,21 +8,13 @@ import { downloadBackup, importJSON, type Backup } from "../sync/backup";
 import { syncConfigured, signInWithEmail, currentEmail } from "../sync/supabase";
 import { sync } from "../sync/engine";
 import { Icon, type IconName } from "../ui/Icon";
+import { Modal } from "../ui/Modal";
 import { t } from "../i18n";
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div style={{ marginTop: 18 }}>
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "var(--x-ink-3)",
-          padding: "0 18px 8px",
-        }}
-      >
+      <div className="x-eyebrow" style={{ padding: "0 18px 8px" }}>
         {title}
       </div>
       <div
@@ -72,16 +64,14 @@ function Row({
       }}
     >
       <span
+        className="x-icon-circle"
         style={{
           width: 32,
           height: 32,
           borderRadius: 10,
-          background: danger ? "rgba(200,75,49,0.12)" : "var(--x-cream-2)",
-          color: danger ? "var(--x-clay)" : "var(--x-ink-2)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
+          ...(danger
+            ? { background: "rgba(200,75,49,0.12)", color: "var(--x-clay)" }
+            : {}),
         }}
       >
         <Icon name={icon} size={16} stroke={1.7} />
@@ -121,6 +111,8 @@ export function Settings() {
   const [who, setWho] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
   const [editing, setEditing] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
+  const [pinVal, setPinVal] = useState("");
 
   useEffect(() => {
     if (snap) {
@@ -151,10 +143,15 @@ export function Settings() {
     setMsg(t("imported"));
   }
 
-  async function setPin() {
-    const p = prompt(t("setPin"));
-    if (!p) return;
-    await updateSettings({ pin_hash: await sha256(p) });
+  function setPin() {
+    setPinVal("");
+    setPinOpen(true);
+  }
+
+  async function confirmPin() {
+    if (!pinVal) return;
+    await updateSettings({ pin_hash: await sha256(pinVal) });
+    setPinOpen(false);
     await reload();
     setMsg(t("saved"));
   }
@@ -168,9 +165,7 @@ export function Settings() {
           padding: "calc(14px + env(safe-area-inset-top,0px)) 22px 4px",
         }}
       >
-        <div className="x-display" style={{ fontSize: 28, fontWeight: 600 }}>
-          {t("settings")}
-        </div>
+        <div className="x-screen-title">{t("settings")}</div>
       </div>
 
       <div className="x-body" style={{ padding: "6px 14px 20px" }}>
@@ -185,6 +180,7 @@ export function Settings() {
           }}
         >
           <div
+            className="x-icon-circle"
             style={{
               width: 44,
               height: 44,
@@ -193,9 +189,6 @@ export function Settings() {
                 ? "rgba(92,127,60,0.16)"
                 : "var(--x-cream-2)",
               color: synced ? "var(--x-sage)" : "var(--x-ink-3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             <Icon name={synced ? "cloud-check" : "cloud"} size={22} stroke={1.7} />
@@ -249,17 +242,7 @@ export function Settings() {
               padding: "0 18px 8px",
             }}
           >
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--x-ink-3)",
-              }}
-            >
-              {t("accountGroup")}
-            </span>
+            <span className="x-eyebrow">{t("accountGroup")}</span>
             <button
               onClick={() => setEditing((v) => !v)}
               style={{
@@ -454,6 +437,25 @@ export function Settings() {
           {t("appName")} · {t("versionLine")}
         </div>
       </div>
+
+      <Modal
+        open={pinOpen}
+        title={t("pinTitle")}
+        confirmLabel={t("confirm")}
+        confirmDisabled={!pinVal}
+        onConfirm={confirmPin}
+        onClose={() => setPinOpen(false)}
+      >
+        <input
+          className="x-input x-num"
+          type="password"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="••••"
+          value={pinVal}
+          onChange={(e) => setPinVal(e.target.value.replace(/[^\d]/g, ""))}
+        />
+      </Modal>
     </div>
   );
 }

@@ -92,12 +92,11 @@ export function Home() {
           </svg>
 
           <div
+            className="x-eyebrow"
             style={{
               fontSize: 12,
               letterSpacing: "0.16em",
-              textTransform: "uppercase",
               color: "var(--x-ink-4)",
-              fontWeight: 600,
             }}
           >
             {t("safeToSpend")}
@@ -138,7 +137,7 @@ export function Home() {
             }}
           >
             <div style={{ flex: 1, height: 1, background: "var(--x-ink-3)", opacity: 0.4 }} />
-            <span style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+            <span className="x-eyebrow" style={{ color: "inherit" }}>
               {t("perDay")}
             </span>
             <div style={{ flex: 1, height: 1, background: "var(--x-ink-3)", opacity: 0.4 }} />
@@ -321,17 +320,8 @@ export function Home() {
                       style={{ display: "flex", alignItems: "center", gap: 8 }}
                     >
                       <span
-                        style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: 8,
-                          background: "var(--x-cream-2)",
-                          color: "var(--x-ink-2)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
+                        className="x-icon-circle"
+                        style={{ width: 26, height: 26, borderRadius: 8 }}
                       >
                         <Icon name="goals" size={15} stroke={1.7} />
                       </span>
