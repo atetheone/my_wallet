@@ -49,9 +49,29 @@ export function App() {
           >
             Base de données illisible
           </div>
-          <p className="x-warn" style={{ textAlign: "center" }}>
+          <pre
+            className="x-num"
+            style={{
+              color: "var(--x-clay)",
+              fontSize: 11,
+              lineHeight: 1.5,
+              textAlign: "left",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              userSelect: "text",
+              WebkitUserSelect: "text",
+              maxHeight: "40vh",
+              overflow: "auto",
+              width: "100%",
+              background: "var(--x-paper)",
+              border: "1px solid var(--x-line)",
+              borderRadius: 12,
+              padding: 12,
+              margin: 0,
+            }}
+          >
             {error}
-          </p>
+          </pre>
           <p
             style={{
               fontSize: 13,

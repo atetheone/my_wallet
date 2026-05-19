@@ -54,6 +54,65 @@ interface Store {
 
 const Ctx = createContext<Store | null>(null);
 
+/**
+ * Boot failed. The UI otherwise only sees a flattened "disk I/O error", which
+ * hides the real IndexedDB exception. This unwraps the cause chain and runs a
+ * direct IndexedDB self-test so the on-device error screen reports the actual
+ * root cause (no desktop devtools needed).
+ */
+async function diagnose(e: unknown): Promise<string> {
+  const parts: string[] = [];
+  let cur: unknown = e;
+  let depth = 0;
+  while (cur && depth < 6) {
+    if (cur instanceof Error) {
+      parts.push(`${cur.name}: ${cur.message}`);
+      cur = (cur as { cause?: unknown }).cause;
+    } else {
+      parts.push(String(cur));
+      cur = undefined;
+    }
+    depth++;
+  }
+
+  parts.push(`secureContext=${window.isSecureContext}`);
+  parts.push(`indexedDB=${typeof indexedDB !== "undefined" && !!indexedDB}`);
+
+  // Direct IndexedDB read/write probe — isolates "browser has no usable IDB"
+  // from "wa-sqlite/VFS bug".
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open("__xaalis_probe__", 1);
+      open.onupgradeneeded = () => open.result.createObjectStore("s");
+      open.onerror = () => reject(open.error ?? new Error("open failed"));
+      open.onsuccess = () => {
+        try {
+          const db = open.result;
+          const tx = db.transaction("s", "readwrite");
+          tx.objectStore("s").put(1, "k");
+          tx.oncomplete = () => {
+            db.close();
+            indexedDB.deleteDatabase("__xaalis_probe__");
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error ?? new Error("tx failed"));
+          tx.onabort = () =>
+            reject(tx.error ?? new Error("tx aborted"));
+        } catch (err) {
+          reject(err);
+        }
+      };
+    });
+    parts.push("idbProbe=OK");
+  } catch (err) {
+    parts.push(
+      `idbProbe=FAIL ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`,
+    );
+  }
+
+  return parts.join("\n");
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSnap(await load());
         setReady(true);
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        setError(await diagnose(e));
         setReady(true);
       }
     })();
