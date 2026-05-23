@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { updateSettings, addFixedCost, addGoal } from "../db/repo";
+import { updateSettings, addFixedCost, addGoal, addExpense, addExtraIncome, getSettings } from "../db/repo";
 import { parseXOF } from "../lib/money";
 import { Icon } from "../ui/Icon";
 import { t } from "../i18n";
@@ -23,12 +23,15 @@ export function SetupWizard({ onClose, onComplete }: Props) {
   // step 2 — fixed costs
   const [costs, setCosts] = useState<CostRow[]>([{ label: "", amount: "" }]);
 
-  // step 3 — first goal (optional)
+  // step 3 — current balance (optional calibration)
+  const [currentBalance, setCurrentBalance] = useState("");
+
+  // step 4 — first goal (optional)
   const [goalName, setGoalName] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
   const [goalDate, setGoalDate] = useState("");
 
-  // step 4 — name (optional)
+  // step 5 — name (optional)
   const [userName, setUserName] = useState("");
 
   const [busy, setBusy] = useState(false);
@@ -48,15 +51,17 @@ export function SetupWizard({ onClose, onComplete }: Props) {
   async function finish() {
     setBusy(true);
     try {
+      const savingsAmount = parseXOF(savings);
+      const validCosts = costs.filter((c) => c.label && c.amount);
+      const fixedCostsSum = validCosts.reduce((s, c) => s + parseXOF(c.amount), 0);
+
       await updateSettings({
-        savings_commitment: parseXOF(savings),
+        savings_commitment: savingsAmount,
         setup_complete: 1,
         name: userName.trim() || null,
       });
-      for (const c of costs) {
-        if (c.label && c.amount) {
-          await addFixedCost({ label: c.label, amount: parseXOF(c.amount), day_of_month: 1 });
-        }
+      for (const c of validCosts) {
+        await addFixedCost({ label: c.label, amount: parseXOF(c.amount), day_of_month: 1 });
       }
       if (goalName && goalTarget) {
         await addGoal({
@@ -66,13 +71,46 @@ export function SetupWizard({ onClose, onComplete }: Props) {
           allocation: 100,
         });
       }
+
+      // Opening balance calibration: if the user told us what they currently have,
+      // record a single adjustment transaction so the formula matches reality.
+      if (currentBalance.trim()) {
+        const userHas = parseXOF(currentBalance);
+        const settings = await getSettings();
+        const formulaAmount = settings.fixed_income - savingsAmount - fixedCostsSum;
+        const delta = formulaAmount - userHas; // positive = already spent before app
+        const now = Date.now();
+        if (delta > 0) {
+          // They have LESS than the formula assumes — record pre-app spending
+          await addExpense({
+            date: now,
+            amount: delta,
+            category_id: null,
+            method: "cash",
+            note: "Dépenses avant Xaalis",
+            receipt: null,
+          });
+        } else if (delta < 0) {
+          // They have MORE than the formula assumes — record extra income
+          await addExtraIncome(now, -delta, "Solde initial");
+        }
+      }
+
       await onComplete();
     } finally {
       setBusy(false);
     }
   }
 
-  const TITLES = ["", t("setupSavings"), t("setupFixedCosts"), t("setupGoal"), t("setupName")];
+  const TITLES = [
+    "",
+    t("setupSavings"),
+    t("setupFixedCosts"),
+    t("setupCurrentBalance"),
+    t("setupGoal"),
+    t("setupName"),
+  ];
+  const TOTAL_STEPS = 5;
 
   return (
     <div
@@ -110,7 +148,7 @@ export function SetupWizard({ onClose, onComplete }: Props) {
           <Icon name="arrow-left" size={22} stroke={1.8} />
         </button>
         <div style={{ flex: 1 }}>
-          <div className="x-eyebrow">{step} / 4</div>
+          <div className="x-eyebrow">{step} / {TOTAL_STEPS}</div>
           <div className="x-display" style={{ fontSize: 18, fontWeight: 600, marginTop: 2 }}>
             {TITLES[step]}
           </div>
@@ -208,6 +246,23 @@ export function SetupWizard({ onClose, onComplete }: Props) {
         {step === 3 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
+              {t("setupCurrentBalanceDesc")}
+            </p>
+            <div className="x-label">{t("setupCurrentBalanceLabel")}</div>
+            <input
+              className="x-input x-num"
+              inputMode="numeric"
+              autoFocus
+              value={currentBalance}
+              onChange={(e) => setCurrentBalance(e.target.value)}
+              placeholder="120 000"
+            />
+          </div>
+        )}
+
+        {step === 4 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <p style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
               Voyage, équipement, projet… Laisse vide pour passer.
             </p>
             <div className="x-label">{t("obGoalName")}</div>
@@ -235,7 +290,7 @@ export function SetupWizard({ onClose, onComplete }: Props) {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
               Pour personnaliser les messages dans l'appli.
@@ -262,16 +317,16 @@ export function SetupWizard({ onClose, onComplete }: Props) {
           gap: 10,
         }}
       >
-        {step === 3 && (
+        {(step === 3 || step === 4) && (
           <button
             className="x-btn x-btn-ghost"
             style={{ flex: 1 }}
-            onClick={() => setStep(4)}
+            onClick={() => setStep((s) => s + 1)}
           >
-            {t("setupSkipGoal")}
+            {t("obSkip")}
           </button>
         )}
-        {step < 4 ? (
+        {step < TOTAL_STEPS ? (
           <button
             className="x-btn"
             style={{ flex: 1 }}

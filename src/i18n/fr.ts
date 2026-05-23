@@ -131,6 +131,9 @@ export const fr = {
   // setup wizard
   setupSavings: "Épargne mensuelle",
   setupFixedCosts: "Charges fixes",
+  setupCurrentBalance: "Solde actuel",
+  setupCurrentBalanceDesc: "Combien as-tu disponible à dépenser en ce moment ? Laisse vide si tu ne sais pas.",
+  setupCurrentBalanceLabel: "Disponible maintenant",
   setupGoal: "Premier objectif d'épargne",
   setupName: "Ton prénom (optionnel)",
   setupNamePlaceholder: "Ex. Awa",
