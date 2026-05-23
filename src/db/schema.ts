@@ -77,6 +77,12 @@ const MIGRATIONS: string[] = [
     deleted       INTEGER NOT NULL DEFAULT 0
   );
   `,
+
+  // v2 — add user name + setup wizard completion flag to the settings singleton
+  `
+  ALTER TABLE settings ADD COLUMN name TEXT;
+  ALTER TABLE settings ADD COLUMN setup_complete INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 /** Default French categories seeded on first run. */

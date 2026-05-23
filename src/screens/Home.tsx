@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useStore } from "../state/store";
+import { updateSettings } from "../db/repo";
 import { formatXOF } from "../lib/money";
 import { fmtN } from "../ui/format";
 import { projectGoal } from "../lib/safeToSpend";
@@ -6,10 +8,12 @@ import { navigate } from "../lib/router";
 import { catMeta } from "../ui/cats";
 import { Icon } from "../ui/Icon";
 import { t } from "../i18n";
+import { SetupWizard } from "./SetupWizard";
 
 /** The one screen that matters: safe-to-spend + goal progress. */
 export function Home() {
-  const { snap } = useStore();
+  const { snap, reload } = useStore();
+  const [showSetup, setShowSetup] = useState(false);
   if (!snap) return null;
   const { safe, goals, periodDays, spent, budget, daysRemaining } = snap;
   const neg = safe.safeToSpend < 0;
@@ -17,7 +21,16 @@ export function Home() {
     budget > 0 ? Math.min(100, Math.max(0, (spent / budget) * 100)) : 0;
   const breakdown = snap.breakdown.filter((b) => b.total > 0);
   const breakdownTotal = breakdown.reduce((s, b) => s + b.total, 0);
-  const initial = "A";
+  const name = snap.settings.name;
+  const initial = name ? name[0].toUpperCase() : "X";
+  const hour = new Date().getHours();
+  const greet = (hour < 12 ? t("greetingMorning") : t("greeting")) + (name ? `, ${name}` : "");
+  const showBanner = snap.settings.setup_complete === 0;
+
+  async function dismissBanner() {
+    await updateSettings({ setup_complete: 1 });
+    await reload();
+  }
 
   return (
     <div className="x-screen">
@@ -34,7 +47,7 @@ export function Home() {
           <div
             style={{ fontSize: 13, color: "var(--x-ink-3)", fontWeight: 500 }}
           >
-            {t("greeting")}
+            {greet}
           </div>
           <div
             className="x-display"
@@ -230,13 +243,50 @@ export function Home() {
           </div>
         )}
 
-        <button
-          className="x-btn x-btn-saffron"
-          style={{ width: "100%", marginTop: 14, padding: "18px 22px" }}
-          onClick={() => navigate("add")}
-        >
-          <Icon name="plus" size={20} stroke={2} /> {t("addExpense")}
-        </button>
+        {showBanner && (
+          <div
+            style={{
+              marginTop: 12,
+              padding: "14px 16px",
+              borderRadius: 16,
+              background: "var(--x-paper)",
+              border: "1px solid var(--x-line)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 12,
+            }}
+            onClick={() => setShowSetup(true)}
+          >
+            <span
+              className="x-icon-circle"
+              style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0 }}
+            >
+              <Icon name="sparkle" size={18} stroke={1.7} />
+            </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>{t("bannerTitle")}</div>
+              <div style={{ fontSize: 12, color: "var(--x-ink-3)", marginTop: 2 }}>
+                {t("bannerBody")}
+              </div>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); dismissBanner(); }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--x-ink-4)",
+                cursor: "pointer",
+                padding: 4,
+                flexShrink: 0,
+                display: "flex",
+              }}
+              aria-label="Fermer"
+            >
+              <Icon name="close" size={14} stroke={1.8} />
+            </button>
+          </div>
+        )}
 
         <div
           style={{
@@ -468,6 +518,13 @@ export function Home() {
           </div>
         )}
       </div>
+
+      {showSetup && (
+        <SetupWizard
+          onClose={() => setShowSetup(false)}
+          onComplete={async () => { setShowSetup(false); await reload(); }}
+        />
+      )}
     </div>
   );
 }

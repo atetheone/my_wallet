@@ -118,6 +118,7 @@ export function App() {
     );
 
   const fullscreen = route === "add";
+  const showFab = route === "home" || route === "history" || route === "goals";
 
   return (
     <div className={"app-shell" + (fullscreen ? " no-tabbar" : "")}>
@@ -129,6 +130,15 @@ export function App() {
         {route === "settings" && <Settings />}
         {route === "onboarding" && <Home />}
       </main>
+      {showFab && (
+        <button
+          className="x-fab"
+          onClick={() => navigate("add")}
+          aria-label={t("addExpense")}
+        >
+          <Icon name="plus" size={24} stroke={2.2} />
+        </button>
+      )}
       {!fullscreen && (
         <nav className="x-tabbar">
           {TABS.map((tab) => (

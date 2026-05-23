@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import {
   listExpenses,
-  deleteExpense,
   listCategories,
   type Expense,
 } from "../db/repo";
@@ -10,6 +9,7 @@ import { fmtN } from "../ui/format";
 import { catMeta } from "../ui/cats";
 import { Icon } from "../ui/Icon";
 import { t } from "../i18n";
+import { ExpenseDetail } from "./ExpenseDetail";
 
 const DAY_KEY = (ms: number) => {
   const d = new Date(ms);
@@ -23,6 +23,7 @@ export function History() {
   const [view, setView] = useState<"liste" | "categories">("liste");
   const [items, setItems] = useState<Expense[]>([]);
   const [catName, setCatName] = useState<Record<string, string>>({});
+  const [selected, setSelected] = useState<Expense | null>(null);
 
   async function refresh() {
     setItems(await listExpenses());
@@ -32,12 +33,6 @@ export function History() {
   useEffect(() => {
     refresh();
   }, []);
-
-  async function remove(id: string) {
-    await deleteExpense(id);
-    await refresh();
-    await reload();
-  }
 
   const nameOf = (e: Expense) =>
     (e.category_id && catName[e.category_id]) || "Divers";
@@ -182,6 +177,7 @@ export function History() {
                   return (
                     <div
                       key={d.id}
+                      onClick={() => setSelected(d)}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -191,6 +187,7 @@ export function History() {
                           i < g.rows.length - 1
                             ? "1px solid var(--x-line)"
                             : "none",
+                        cursor: "pointer",
                       }}
                     >
                       <div
@@ -255,26 +252,22 @@ export function History() {
                       >
                         −{fmtN(d.amount)}
                       </div>
-                      <button
-                        onClick={() => remove(d.id)}
-                        aria-label={t("delete")}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "var(--x-ink-4)",
-                          cursor: "pointer",
-                          padding: 4,
-                          display: "flex",
-                        }}
-                      >
-                        <Icon name="trash" size={16} stroke={1.6} />
-                      </button>
+                      <Icon name="chevron-right" size={14} stroke={1.6} color="var(--x-ink-4)" />
                     </div>
                   );
                 })}
               </div>
             </div>
           ))}
+
+        {selected && (
+          <ExpenseDetail
+            expense={selected}
+            catName={catName}
+            onClose={() => setSelected(null)}
+            onSaved={async () => { setSelected(null); await refresh(); await reload(); }}
+          />
+        )}
 
         {view === "categories" && catTotals.length > 0 && (
           <div

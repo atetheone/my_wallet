@@ -19,6 +19,8 @@ export interface Settings {
   pin_hash: string | null;
   language: string;
   onboarded: number;
+  name: string | null;
+  setup_complete: number;
 }
 
 export interface Expense {
@@ -58,7 +60,7 @@ export interface Goal {
 
 export async function getSettings(): Promise<Settings> {
   const s = await get<Settings>(
-    "SELECT fixed_income, salary_day, savings_commitment, pin_hash, language, onboarded FROM settings WHERE id = 'singleton';",
+    "SELECT fixed_income, salary_day, savings_commitment, pin_hash, language, onboarded, name, setup_complete FROM settings WHERE id = 'singleton';",
   );
   return (
     s ?? {
@@ -68,6 +70,8 @@ export async function getSettings(): Promise<Settings> {
       pin_hash: null,
       language: "fr",
       onboarded: 0,
+      name: null,
+      setup_complete: 0,
     }
   );
 }
@@ -82,6 +86,8 @@ const SETTINGS_COLUMNS: ReadonlySet<keyof Settings> = new Set([
   "pin_hash",
   "language",
   "onboarded",
+  "name",
+  "setup_complete",
 ]);
 
 export async function updateSettings(patch: Partial<Settings>): Promise<void> {
@@ -117,6 +123,26 @@ export async function deleteExpense(id: string): Promise<void> {
   await run(
     "UPDATE expenses SET deleted = 1, updated_at = ? WHERE id = ?;",
     [Date.now(), id],
+  );
+}
+
+const EXPENSE_UPDATE_COLUMNS: ReadonlySet<keyof Omit<Expense, "id">> = new Set([
+  "date", "amount", "category_id", "method", "note", "receipt",
+]);
+
+export async function updateExpense(
+  id: string,
+  patch: Partial<Omit<Expense, "id">>,
+): Promise<void> {
+  const cols = (Object.keys(patch) as (keyof Omit<Expense, "id">)[]).filter(
+    (c) => EXPENSE_UPDATE_COLUMNS.has(c),
+  );
+  if (!cols.length) return;
+  const set = cols.map((c) => `${c} = ?`).join(", ");
+  const vals = cols.map((c) => (patch as Record<string, unknown>)[c] as never);
+  await run(
+    `UPDATE expenses SET ${set}, updated_at = ? WHERE id = ?;`,
+    [...vals, Date.now(), id],
   );
 }
 

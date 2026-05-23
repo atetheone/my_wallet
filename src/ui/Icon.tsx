@@ -33,7 +33,8 @@ export type IconName =
   | "import"
   | "mail"
   | "close"
-  | "backspace";
+  | "backspace"
+  | "income";
 
 export function Icon({
   name,
@@ -280,6 +281,13 @@ export function Icon({
         <svg {...p}>
           <path d="M8 4L2 12l6 8h13a1 1 0 001-1V5a1 1 0 00-1-1z" />
           <path d="M13 9l5 6M18 9l-5 6" />
+        </svg>
+      );
+    case "income":
+      return (
+        <svg {...p}>
+          <path d="M12 19V5M5 12l7-7 7 7" />
+          <path d="M5 19h14" />
         </svg>
       );
     default:

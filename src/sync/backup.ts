@@ -3,7 +3,9 @@
  * `updated_at` so re-importing an old file never clobbers newer local rows.
  */
 
+import { z } from "zod";
 import { all, run } from "../db/sqlite";
+import { t } from "../i18n";
 
 export const SYNC_TABLES = [
   "settings",
@@ -50,7 +52,7 @@ export async function downloadBackup(): Promise<void> {
 const TABLE_COLUMNS: Record<SyncTable, ReadonlySet<string>> = {
   settings: new Set([
     "id", "fixed_income", "salary_day", "savings_commitment", "pin_hash",
-    "language", "onboarded", "updated_at", "deleted",
+    "language", "onboarded", "name", "setup_complete", "updated_at", "deleted",
   ]),
   categories: new Set([
     "id", "name", "is_preset", "sort", "updated_at", "deleted",
@@ -98,11 +100,27 @@ async function upsertNewer(
   );
 }
 
+const rowShape = z.object({ id: z.string(), updated_at: z.number(), deleted: z.number() }).passthrough();
+const BackupSchema = z.object({
+  app: z.literal("xaalis"),
+  version: z.literal(1),
+  exportedAt: z.number(),
+  tables: z.object({
+    settings:     z.array(rowShape),
+    categories:   z.array(rowShape),
+    expenses:     z.array(rowShape.extend({ date: z.number(), amount: z.number() })),
+    income_extra: z.array(rowShape),
+    fixed_costs:  z.array(rowShape),
+    goals:        z.array(rowShape),
+  }),
+});
+
 export async function importJSON(data: Backup): Promise<void> {
-  if (data?.app !== "xaalis") throw new Error("Fichier invalide");
+  const result = BackupSchema.safeParse(data);
+  if (!result.success) throw new Error(t("backupInvalid"));
   for (const tbl of SYNC_TABLES) {
-    for (const row of data.tables[tbl] ?? []) {
-      await upsertNewer(tbl, row);
+    for (const row of result.data.tables[tbl] ?? []) {
+      await upsertNewer(tbl, row as Record<string, unknown>);
     }
   }
 }

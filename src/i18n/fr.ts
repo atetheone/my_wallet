@@ -25,6 +25,9 @@ export const fr = {
   obSkip: "Passer",
 
   // home
+  greetingMorning: "Bonjour",
+  bannerTitle: "Complète ton profil",
+  bannerBody: "Ajoute ton épargne, tes charges et un premier objectif.",
   safeToSpend: "Reste à dépenser",
   perDay: "Par jour",
   daysLeft: "jours restants",
@@ -54,9 +57,18 @@ export const fr = {
   save: "Enregistrer",
   cancel: "Annuler",
   newExpense: "Nouvelle dépense",
+  newIncome: "Nouveau revenu",
   willRemain: "Restera",
   thisMonthShort: "ce mois",
   validateExpense: "Valider la dépense",
+  validateIncome: "Valider le revenu",
+  toggleExpense: "Dépense",
+  toggleIncome: "Revenu",
+  incomeSource: "Source",
+  incomeSourcePlaceholder: "Revenu variable",
+  overspendTitle: "Budget insuffisant",
+  overspendBody: "Cette dépense dépasse votre budget de {n} FCFA.",
+  overspendConfirm: "Enregistrer quand même",
 
   // history
   history: "Historique",
@@ -115,6 +127,22 @@ export const fr = {
   online: "en ligne",
   linkSent: "Lien envoyé",
   versionLine: "version 1.0.0 · « xaalis » signifie argent en wolof",
+
+  // setup wizard
+  setupSavings: "Épargne mensuelle",
+  setupFixedCosts: "Charges fixes",
+  setupGoal: "Premier objectif d'épargne",
+  setupName: "Ton prénom (optionnel)",
+  setupNamePlaceholder: "Ex. Awa",
+  setupFinish: "Terminer la configuration",
+  setupSkipGoal: "Passer cet objectif",
+
+  // expense detail
+  expenseDetailTitle: "Modifier la dépense",
+  expenseDetailDate: "Date et heure",
+
+  // backup
+  backupInvalid: "Fichier de sauvegarde invalide",
 
   // modals
   confirm: "Confirmer",
