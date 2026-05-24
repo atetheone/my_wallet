@@ -269,6 +269,18 @@ export function History() {
           />
         )}
 
+        {view === "categories" && catTotals.length === 0 && (
+          <div
+            style={{
+              padding: "40px 20px",
+              textAlign: "center",
+              color: "var(--x-ink-3)",
+              fontSize: 14,
+            }}
+          >
+            {t("noExpenses")}
+          </div>
+        )}
         {view === "categories" && catTotals.length > 0 && (
           <div
             style={{

@@ -115,9 +115,9 @@ export function Goals() {
           }
           aria-label={t("addGoal")}
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
             background: "var(--x-ink)",
             color: "var(--x-paper)",
             border: "none",
@@ -241,6 +241,27 @@ export function Goals() {
             marginTop: 10,
           }}
         >
+          {goals.length === 0 && (
+            <div
+              className="x-card"
+              style={{ padding: "28px 20px", textAlign: "center" }}
+            >
+              <Icon name="goals" size={32} stroke={1.4} color="var(--x-ink-4)" />
+              <div
+                style={{
+                  marginTop: 12,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--x-ink-2)",
+                }}
+              >
+                {t("noGoals")}
+              </div>
+              <div style={{ marginTop: 6, fontSize: 12, color: "var(--x-ink-3)" }}>
+                {t("goalHint")}
+              </div>
+            </div>
+          )}
           {goals.map((g) => {
             const pct =
               g.target_amount > 0

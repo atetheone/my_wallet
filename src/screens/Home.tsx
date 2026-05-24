@@ -277,11 +277,14 @@ export function Home() {
                 border: "none",
                 color: "var(--x-ink-4)",
                 cursor: "pointer",
-                padding: 4,
                 flexShrink: 0,
                 display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: 44,
+                minHeight: 44,
               }}
-              aria-label="Fermer"
+              aria-label={t("cancel")}
             >
               <Icon name="close" size={14} stroke={1.8} />
             </button>
