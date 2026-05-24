@@ -201,7 +201,7 @@ export function QuickAdd() {
           <div style={{ marginTop: 10, fontSize: 12, color: "var(--x-ink-3)" }}>
             {mode === "income" ? (
               <>
-                Sera{" "}
+                {t("willBe")}{" "}
                 <span className="x-num" style={{ color: "var(--x-sage)", fontWeight: 600 }}>
                   {fmtN(futureBalance)}
                 </span>{" "}

@@ -87,12 +87,12 @@ export function SetupWizard({ onClose, onComplete }: Props) {
             amount: delta,
             category_id: null,
             method: "cash",
-            note: "Dépenses avant Xaalis",
+            note: t("calibrationExpenseNote"),
             receipt: null,
           });
         } else if (delta < 0) {
           // They have MORE than the formula assumes — record extra income
-          await addExtraIncome(now, -delta, "Solde initial");
+          await addExtraIncome(now, -delta, t("calibrationIncomeNote"));
         }
       }
 
@@ -181,7 +181,7 @@ export function SetupWizard({ onClose, onComplete }: Props) {
         {step === 1 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
-              Combien réserves-tu chaque mois avant de dépenser ?
+              {t("setupSavingsHint")}
             </p>
             <div className="x-label">{t("obSavings")}</div>
             <input
@@ -198,7 +198,7 @@ export function SetupWizard({ onClose, onComplete }: Props) {
         {step === 2 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
-              Loyer, abonnements, factures récurrentes…
+              {t("setupFixedCostsHint")}
             </p>
             {costs.map((c, i) => (
               <div
@@ -212,7 +212,7 @@ export function SetupWizard({ onClose, onComplete }: Props) {
                     style={{ flex: 1 }}
                     value={c.label}
                     onChange={(e) => updateCost(i, "label", e.target.value)}
-                    placeholder="Loyer"
+                    placeholder={t("setupFixedCostPlaceholder")}
                   />
                   {costs.length > 1 && (
                     <button
@@ -269,7 +269,7 @@ export function SetupWizard({ onClose, onComplete }: Props) {
         {step === 4 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
-              Voyage, équipement, projet… Laisse vide pour passer.
+              {t("setupGoalHint")}
             </p>
             <div className="x-label">{t("obGoalName")}</div>
             <input
@@ -299,7 +299,7 @@ export function SetupWizard({ onClose, onComplete }: Props) {
         {step === 5 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
-              Pour personnaliser les messages dans l'appli.
+              {t("setupNameHint")}
             </p>
             <div className="x-label">{t("setupName")}</div>
             <input
