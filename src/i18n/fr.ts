@@ -59,6 +59,7 @@ export const fr = {
   newExpense: "Nouvelle dépense",
   newIncome: "Nouveau revenu",
   willRemain: "Restera",
+  willBe: "Sera",
   thisMonthShort: "ce mois",
   validateExpense: "Valider la dépense",
   validateIncome: "Valider le revenu",
@@ -130,15 +131,22 @@ export const fr = {
 
   // setup wizard
   setupSavings: "Épargne mensuelle",
+  setupSavingsHint: "Combien réserves-tu chaque mois avant de dépenser ?",
   setupFixedCosts: "Charges fixes",
+  setupFixedCostsHint: "Loyer, abonnements, factures récurrentes…",
+  setupFixedCostPlaceholder: "Loyer",
   setupCurrentBalance: "Solde actuel",
   setupCurrentBalanceDesc: "Combien as-tu disponible à dépenser en ce moment ? Laisse vide si tu ne sais pas.",
   setupCurrentBalanceLabel: "Disponible maintenant",
   setupGoal: "Premier objectif d'épargne",
+  setupGoalHint: "Voyage, équipement, projet… Laisse vide pour passer.",
   setupName: "Ton prénom (optionnel)",
+  setupNameHint: "Pour personnaliser les messages dans l'appli.",
   setupNamePlaceholder: "Ex. Awa",
   setupFinish: "Terminer la configuration",
   setupSkipGoal: "Passer cet objectif",
+  calibrationExpenseNote: "Dépenses avant Xaalis",
+  calibrationIncomeNote: "Solde initial",
 
   // expense detail
   expenseDetailTitle: "Modifier la dépense",
