@@ -116,8 +116,8 @@ export function QuickAdd() {
           style={{
             background: "transparent",
             border: "none",
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

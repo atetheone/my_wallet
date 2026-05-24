@@ -171,6 +171,11 @@ main {
   color: var(--x-ink);
   box-shadow: inset 0 0 0 1.5px var(--x-line-2);
 }
+button:focus-visible {
+  outline: 2px solid var(--x-saffron);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 /* ── card ────────────────────────────────────────────────────── */
 .x-card {
@@ -316,7 +321,7 @@ button {
   font-family: var(--x-font-body);
 }
 .x-input::placeholder {
-  color: var(--x-ink-4);
+  color: var(--x-ink-3);
 }
 .x-input:focus {
   outline: none;

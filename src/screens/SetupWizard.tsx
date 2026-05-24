@@ -142,7 +142,10 @@ export function SetupWizard({ onClose, onComplete }: Props) {
             cursor: "pointer",
             color: "var(--x-ink)",
             display: "flex",
-            padding: 4,
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 44,
+            minHeight: 44,
           }}
         >
           <Icon name="arrow-left" size={22} stroke={1.8} />
@@ -161,7 +164,10 @@ export function SetupWizard({ onClose, onComplete }: Props) {
             cursor: "pointer",
             color: "var(--x-ink-3)",
             display: "flex",
-            padding: 4,
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 44,
+            minHeight: 44,
           }}
           aria-label={t("cancel")}
         >
