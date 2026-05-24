@@ -143,6 +143,7 @@ export const fr = {
   // expense detail
   expenseDetailTitle: "Modifier la dépense",
   expenseDetailDate: "Date et heure",
+  deleteExpenseTitle: "Supprimer la dépense ?",
 
   // backup
   backupInvalid: "Fichier de sauvegarde invalide",

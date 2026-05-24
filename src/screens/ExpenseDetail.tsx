@@ -3,6 +3,7 @@ import { updateExpense, deleteExpense, listCategories, type Expense, type Catego
 import { fmtN } from "../ui/format";
 import { catMeta } from "../ui/cats";
 import { Icon } from "../ui/Icon";
+import { Modal } from "../ui/Modal";
 import { t } from "../i18n";
 
 interface Props {
@@ -26,6 +27,7 @@ export function ExpenseDetail({ expense, onClose, onSaved }: Props) {
   const [dateStr, setDateStr] = useState(toDatetimeLocal(expense.date));
   const [cats, setCats] = useState<Category[]>([]);
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
 
   useEffect(() => {
     listCategories().then(setCats);
@@ -275,7 +277,7 @@ export function ExpenseDetail({ expense, onClose, onSaved }: Props) {
             className="x-btn"
             style={{ flex: 0, padding: "13px 18px", background: "var(--x-clay)" }}
             disabled={busy}
-            onClick={remove}
+            onClick={() => setPendingDelete(true)}
             aria-label={t("delete")}
           >
             <Icon name="trash" size={18} stroke={1.7} />
@@ -290,6 +292,16 @@ export function ExpenseDetail({ expense, onClose, onSaved }: Props) {
           </button>
         </div>
       </div>
+
+      <Modal
+        open={pendingDelete}
+        title={t("deleteExpenseTitle")}
+        subtitle={`${fmtN(expense.amount)} FCFA`}
+        confirmLabel={t("delete")}
+        destructive
+        onConfirm={remove}
+        onClose={() => setPendingDelete(false)}
+      />
     </div>
   );
 }
