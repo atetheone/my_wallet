@@ -3,13 +3,16 @@ import { useStore } from "../state/store";
 import {
   listExpenses,
   listCategories,
+  listExtraIncome,
   type Expense,
+  type ExtraIncome,
 } from "../db/repo";
 import { fmtN } from "../ui/format";
 import { catMeta } from "../ui/cats";
 import { Icon } from "../ui/Icon";
 import { t } from "../i18n";
 import { ExpenseDetail } from "./ExpenseDetail";
+import { IncomeDetail } from "./IncomeDetail";
 
 const DAY_KEY = (ms: number) => {
   const d = new Date(ms);
@@ -18,16 +21,35 @@ const DAY_KEY = (ms: number) => {
 const dayLabel = (ms: number) =>
   new Date(ms).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
+type ExpenseRow = Expense & { _kind: "expense" };
+type IncomeRow = ExtraIncome & { _kind: "income" };
+type SalaryRow = { _kind: "salary"; id: string; date: number; amount: number; note: null };
+type HistoryRow = ExpenseRow | IncomeRow | SalaryRow;
+
+function currentSalaryDate(salaryDay: number): number {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), salaryDay);
+  if (d.getMonth() !== now.getMonth()) d.setDate(0);
+  return d.getTime();
+}
+
 export function History() {
   const { snap, reload } = useStore();
   const [view, setView] = useState<"liste" | "categories">("liste");
-  const [items, setItems] = useState<Expense[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomes, setIncomes] = useState<ExtraIncome[]>([]);
   const [catName, setCatName] = useState<Record<string, string>>({});
-  const [selected, setSelected] = useState<Expense | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [selectedIncome, setSelectedIncome] = useState<ExtraIncome | null>(null);
 
   async function refresh() {
-    setItems(await listExpenses());
-    const cs = await listCategories();
+    const [exps, incs, cs] = await Promise.all([
+      listExpenses(),
+      listExtraIncome(),
+      listCategories(),
+    ]);
+    setExpenses(exps);
+    setIncomes(incs);
     setCatName(Object.fromEntries(cs.map((c) => [c.id, c.name])));
   }
   useEffect(() => {
@@ -37,25 +59,45 @@ export function History() {
   const nameOf = (e: Expense) =>
     (e.category_id && catName[e.category_id]) || "Divers";
 
-  const total = items.reduce((s, e) => s + e.amount, 0);
+  // Synthetic salary row for current period
+  const salaryRow: SalaryRow[] =
+    snap && snap.settings.fixed_income > 0
+      ? [{
+          _kind: "salary",
+          id: "salary-synthetic",
+          date: currentSalaryDate(snap.settings.salary_day),
+          amount: snap.settings.fixed_income,
+          note: null,
+        }]
+      : [];
 
-  // group by day (items already DESC by date)
-  const groups: { key: string; label: string; rows: Expense[] }[] = [];
-  for (const e of items) {
-    const key = DAY_KEY(e.date);
+  const items: HistoryRow[] = [
+    ...expenses.map((e): ExpenseRow => ({ ...e, _kind: "expense" })),
+    ...incomes.map((i): IncomeRow => ({ ...i, _kind: "income" })),
+    ...salaryRow,
+  ].sort((a, b) => b.date - a.date);
+
+  const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0);
+  const incomeTotal =
+    incomes.reduce((s, i) => s + i.amount, 0) + (salaryRow[0]?.amount ?? 0);
+
+  // group by day
+  const groups: { key: string; label: string; rows: HistoryRow[]; expenseSum: number }[] = [];
+  for (const row of items) {
+    const key = DAY_KEY(row.date);
     let g = groups.find((x) => x.key === key);
     if (!g) {
-      g = { key, label: dayLabel(e.date), rows: [] };
+      g = { key, label: dayLabel(row.date), rows: [], expenseSum: 0 };
       groups.push(g);
     }
-    g.rows.push(e);
+    g.rows.push(row);
+    if (row._kind === "expense") g.expenseSum += row.amount;
   }
-  const avgPerDay = groups.length ? Math.round(total / groups.length) : 0;
+  const avgPerDay = groups.length ? Math.round(expenseTotal / groups.length) : 0;
 
-  // category breakdown
-  const byCat: Record<string, { name: string; total: number; count: number }> =
-    {};
-  for (const e of items) {
+  // category breakdown (expenses only)
+  const byCat: Record<string, { name: string; total: number; count: number }> = {};
+  for (const e of expenses) {
     const n = nameOf(e);
     (byCat[n] ??= { name: n, total: 0, count: 0 });
     byCat[n].total += e.amount;
@@ -77,13 +119,18 @@ export function History() {
           </span>
         </div>
         <div className="x-screen-title" style={{ marginTop: 4 }}>
-          <span className="x-num">{fmtN(total)}</span>{" "}
+          <span className="x-num">{fmtN(expenseTotal)}</span>{" "}
           <span style={{ fontSize: 16, color: "var(--x-ink-3)" }}>FCFA</span>
         </div>
         <div style={{ fontSize: 13, color: "var(--x-ink-3)", marginTop: 2 }}>
-          {items.length} {t("expensesWord")} · {fmtN(avgPerDay)} FCFA{" "}
+          {expenses.length} {t("expensesWord")} · {fmtN(avgPerDay)} FCFA{" "}
           {t("perDayAvg")}
         </div>
+        {incomeTotal > 0 && (
+          <div style={{ fontSize: 13, color: "var(--x-sage)", marginTop: 2, fontWeight: 500 }}>
+            +{fmtN(incomeTotal)} FCFA {t("totalIncome")}
+          </div>
+        )}
       </div>
 
       <div style={{ padding: "10px 22px 6px" }}>
@@ -137,7 +184,7 @@ export function History() {
               textAlign: "center",
             }}
           >
-            {t("noExpenses")}
+            {t("noTransactions")}
           </p>
         )}
 
@@ -157,9 +204,11 @@ export function History() {
                 }}
               >
                 <span>{g.label}</span>
-                <span className="x-num">
-                  {fmtN(g.rows.reduce((s, d) => s + d.amount, 0))} FCFA
-                </span>
+                {g.expenseSum > 0 && (
+                  <span className="x-num">
+                    {fmtN(g.expenseSum)} FCFA
+                  </span>
+                )}
               </div>
               <div
                 style={{
@@ -171,13 +220,102 @@ export function History() {
                   border: "1px solid var(--x-line)",
                 }}
               >
-                {g.rows.map((d, i) => {
-                  const n = nameOf(d);
-                  const m = catMeta(n);
+                {g.rows.map((row, i) => {
+                  if (row._kind === "expense") {
+                    const n = nameOf(row);
+                    const m = catMeta(n);
+                    return (
+                      <div
+                        key={row.id}
+                        onClick={() => setSelectedExpense(row)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "12px 14px",
+                          borderBottom:
+                            i < g.rows.length - 1
+                              ? "1px solid var(--x-line)"
+                              : "none",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div
+                          className="x-icon-circle"
+                          style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: 12,
+                            background: m.bg,
+                            color: m.fg,
+                          }}
+                        >
+                          <Icon name={m.icon} size={18} stroke={1.7} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 500,
+                              color: "var(--x-ink)",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {row.note || n}
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              marginTop: 3,
+                            }}
+                          >
+                            <span
+                              style={{ fontSize: 11, color: "var(--x-ink-3)" }}
+                            >
+                              {n}
+                            </span>
+                            <span
+                              style={{ fontSize: 11, color: "var(--x-ink-4)" }}
+                            >
+                              ·
+                            </span>
+                            <span
+                              className={"x-chip " + row.method}
+                              style={{ padding: "2px 7px", fontSize: 10 }}
+                            >
+                              <Icon
+                                name={row.method === "wave" ? "wave" : "cash"}
+                                size={11}
+                                stroke={1.8}
+                              />
+                              {row.method === "wave" ? t("wave") : t("cash")}
+                            </span>
+                          </div>
+                        </div>
+                        <div
+                          className="x-num"
+                          style={{ fontSize: 15, fontWeight: 600 }}
+                        >
+                          −{fmtN(row.amount)}
+                        </div>
+                        <Icon name="chevron-right" size={14} stroke={1.6} color="var(--x-ink-4)" />
+                      </div>
+                    );
+                  }
+
+                  // income or salary row
+                  const isFixed = row._kind === "salary";
+                  const label = isFixed
+                    ? t("salary")
+                    : (row.note || t("toggleIncome"));
                   return (
                     <div
-                      key={d.id}
-                      onClick={() => setSelected(d)}
+                      key={row.id}
+                      onClick={isFixed ? undefined : () => setSelectedIncome(row as ExtraIncome)}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -187,7 +325,7 @@ export function History() {
                           i < g.rows.length - 1
                             ? "1px solid var(--x-line)"
                             : "none",
-                        cursor: "pointer",
+                        cursor: isFixed ? "default" : "pointer",
                       }}
                     >
                       <div
@@ -196,11 +334,11 @@ export function History() {
                           width: 38,
                           height: 38,
                           borderRadius: 12,
-                          background: m.bg,
-                          color: m.fg,
+                          background: "rgba(92,127,60,0.12)",
+                          color: "var(--x-sage)",
                         }}
                       >
-                        <Icon name={m.icon} size={18} stroke={1.7} />
+                        <Icon name="income" size={18} stroke={1.7} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div
@@ -213,46 +351,34 @@ export function History() {
                             textOverflow: "ellipsis",
                           }}
                         >
-                          {d.note || n}
+                          {label}
                         </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            marginTop: 3,
-                          }}
-                        >
+                        {isFixed && (
                           <span
-                            style={{ fontSize: 11, color: "var(--x-ink-3)" }}
+                            style={{
+                              display: "inline-block",
+                              marginTop: 3,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: "var(--x-sage)",
+                              background: "rgba(92,127,60,0.12)",
+                              padding: "1px 6px",
+                              borderRadius: 99,
+                            }}
                           >
-                            {n}
+                            {t("fixedBadge")}
                           </span>
-                          <span
-                            style={{ fontSize: 11, color: "var(--x-ink-4)" }}
-                          >
-                            ·
-                          </span>
-                          <span
-                            className={"x-chip " + d.method}
-                            style={{ padding: "2px 7px", fontSize: 10 }}
-                          >
-                            <Icon
-                              name={d.method === "wave" ? "wave" : "cash"}
-                              size={11}
-                              stroke={1.8}
-                            />
-                            {d.method === "wave" ? t("wave") : t("cash")}
-                          </span>
-                        </div>
+                        )}
                       </div>
                       <div
                         className="x-num"
-                        style={{ fontSize: 15, fontWeight: 600 }}
+                        style={{ fontSize: 15, fontWeight: 600, color: "var(--x-sage)" }}
                       >
-                        −{fmtN(d.amount)}
+                        +{fmtN(row.amount)}
                       </div>
-                      <Icon name="chevron-right" size={14} stroke={1.6} color="var(--x-ink-4)" />
+                      {!isFixed && (
+                        <Icon name="chevron-right" size={14} stroke={1.6} color="var(--x-ink-4)" />
+                      )}
                     </div>
                   );
                 })}
@@ -260,12 +386,19 @@ export function History() {
             </div>
           ))}
 
-        {selected && (
+        {selectedExpense && (
           <ExpenseDetail
-            expense={selected}
+            expense={selectedExpense}
             catName={catName}
-            onClose={() => setSelected(null)}
-            onSaved={async () => { setSelected(null); await refresh(); await reload(); }}
+            onClose={() => setSelectedExpense(null)}
+            onSaved={async () => { setSelectedExpense(null); await refresh(); await reload(); }}
+          />
+        )}
+        {selectedIncome && (
+          <IncomeDetail
+            income={selectedIncome}
+            onClose={() => setSelectedIncome(null)}
+            onSaved={async () => { setSelectedIncome(null); await refresh(); await reload(); }}
           />
         )}
 
@@ -306,7 +439,7 @@ export function History() {
                   <div
                     key={c.name}
                     style={{
-                      flexBasis: `${(c.total / total) * 100}%`,
+                      flexBasis: `${(c.total / expenseTotal) * 100}%`,
                       background: catMeta(c.name).fg,
                     }}
                   />
@@ -315,7 +448,7 @@ export function History() {
             </div>
             {catTotals.map((c) => {
               const m = catMeta(c.name);
-              const pct = Math.round((c.total / total) * 100);
+              const pct = Math.round((c.total / expenseTotal) * 100);
               return (
                 <div
                   key={c.name}
