@@ -86,6 +86,9 @@ export const fr = {
   totalIncome: "reçus",
   salary: "Salaire",
   fixedBadge: "Fixe",
+  filterAll: "Tout",
+  filterExpenses: "Dépenses",
+  filterIncome: "Revenus",
 
   // income detail
   incomeDetailTitle: "Modifier le revenu",

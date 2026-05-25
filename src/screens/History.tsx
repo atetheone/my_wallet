@@ -36,6 +36,7 @@ function currentSalaryDate(salaryDay: number): number {
 export function History() {
   const { snap, reload } = useStore();
   const [view, setView] = useState<"liste" | "categories">("liste");
+  const [filter, setFilter] = useState<"all" | "expenses" | "income">("all");
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<ExtraIncome[]>([]);
   const [catName, setCatName] = useState<Record<string, string>>({});
@@ -71,11 +72,18 @@ export function History() {
         }]
       : [];
 
-  const items: HistoryRow[] = [
+  const allItems: HistoryRow[] = [
     ...expenses.map((e): ExpenseRow => ({ ...e, _kind: "expense" })),
     ...incomes.map((i): IncomeRow => ({ ...i, _kind: "income" })),
     ...salaryRow,
   ].sort((a, b) => b.date - a.date);
+
+  const items =
+    filter === "expenses"
+      ? allItems.filter((r) => r._kind === "expense")
+      : filter === "income"
+        ? allItems.filter((r) => r._kind === "income" || r._kind === "salary")
+        : allItems;
 
   const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0);
   const incomeTotal =
@@ -173,6 +181,44 @@ export function History() {
           })}
         </div>
       </div>
+
+      {view === "liste" && (
+        <div style={{ padding: "0 22px 8px", display: "flex", gap: 8 }}>
+          {(
+            [
+              { id: "all", label: t("filterAll") },
+              { id: "expenses", label: t("filterExpenses") },
+              { id: "income", label: t("filterIncome") },
+            ] as const
+          ).map((f) => {
+            const sel = f.id === filter;
+            const isIncome = f.id === "income";
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                style={{
+                  padding: "5px 14px",
+                  borderRadius: 999,
+                  border: sel ? "none" : "1px solid var(--x-line)",
+                  background: sel
+                    ? isIncome
+                      ? "var(--x-sage)"
+                      : "var(--x-ink)"
+                    : "transparent",
+                  color: sel ? "var(--x-paper)" : "var(--x-ink-3)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "var(--x-font-body)",
+                }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="x-body" style={{ padding: "4px 14px 20px" }}>
         {items.length === 0 && (
