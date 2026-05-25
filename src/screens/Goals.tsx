@@ -4,7 +4,7 @@ import {
   listGoals,
   addGoal,
   deleteGoal,
-  updateGoalSaved,
+  topUpGoal,
   type Goal,
 } from "../db/repo";
 import { formatXOF, parseXOF } from "../lib/money";
@@ -55,7 +55,7 @@ export function Goals() {
 
   async function confirmTopUp() {
     if (!topUpFor) return;
-    await updateGoalSaved(topUpFor.id, topUpFor.saved + parseXOF(topUpVal));
+    await topUpGoal(topUpFor.id, parseXOF(topUpVal), null);
     setTopUpFor(null);
     await refresh();
     await reload();

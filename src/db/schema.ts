@@ -83,6 +83,20 @@ const MIGRATIONS: string[] = [
   ALTER TABLE settings ADD COLUMN name TEXT;
   ALTER TABLE settings ADD COLUMN setup_complete INTEGER NOT NULL DEFAULT 0;
   `,
+
+  // v3 — savings contribution log (each "top up" creates a dated transfer record)
+  `
+  CREATE TABLE savings_transfers (
+    id         TEXT PRIMARY KEY,
+    date       INTEGER NOT NULL,
+    amount     INTEGER NOT NULL,
+    goal_id    TEXT NOT NULL,
+    note       TEXT,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    deleted    INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX idx_savings_transfers_date ON savings_transfers (date);
+  `,
 ];
 
 /** Default French categories seeded on first run. */

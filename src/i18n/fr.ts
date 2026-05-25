@@ -89,6 +89,7 @@ export const fr = {
   filterAll: "Tout",
   filterExpenses: "Dépenses",
   filterIncome: "Revenus",
+  filterSavings: "Épargne",
 
   // income detail
   incomeDetailTitle: "Modifier le revenu",

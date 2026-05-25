@@ -4,8 +4,11 @@ import {
   listExpenses,
   listCategories,
   listExtraIncome,
+  listSavingsTransfers,
+  listGoals,
   type Expense,
   type ExtraIncome,
+  type SavingsTransfer,
 } from "../db/repo";
 import { fmtN } from "../ui/format";
 import { catMeta } from "../ui/cats";
@@ -24,7 +27,8 @@ const dayLabel = (ms: number) =>
 type ExpenseRow = Expense & { _kind: "expense" };
 type IncomeRow = ExtraIncome & { _kind: "income" };
 type SalaryRow = { _kind: "salary"; id: string; date: number; amount: number; note: null };
-type HistoryRow = ExpenseRow | IncomeRow | SalaryRow;
+type SavingsRow = SavingsTransfer & { _kind: "savings"; goal_name: string };
+type HistoryRow = ExpenseRow | IncomeRow | SalaryRow | SavingsRow;
 
 function currentSalaryDate(salaryDay: number): number {
   const now = new Date();
@@ -36,22 +40,28 @@ function currentSalaryDate(salaryDay: number): number {
 export function History() {
   const { snap, reload } = useStore();
   const [view, setView] = useState<"liste" | "categories">("liste");
-  const [filter, setFilter] = useState<"all" | "expenses" | "income">("all");
+  const [filter, setFilter] = useState<"all" | "expenses" | "income" | "savings">("all");
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<ExtraIncome[]>([]);
+  const [savings, setSavings] = useState<SavingsTransfer[]>([]);
   const [catName, setCatName] = useState<Record<string, string>>({});
+  const [goalNames, setGoalNames] = useState<Record<string, string>>({});
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [selectedIncome, setSelectedIncome] = useState<ExtraIncome | null>(null);
 
   async function refresh() {
-    const [exps, incs, cs] = await Promise.all([
+    const [exps, incs, savs, cs, gs] = await Promise.all([
       listExpenses(),
       listExtraIncome(),
+      listSavingsTransfers(),
       listCategories(),
+      listGoals(),
     ]);
     setExpenses(exps);
     setIncomes(incs);
+    setSavings(savs);
     setCatName(Object.fromEntries(cs.map((c) => [c.id, c.name])));
+    setGoalNames(Object.fromEntries(gs.map((g) => [g.id, g.name])));
   }
   useEffect(() => {
     refresh();
@@ -72,10 +82,17 @@ export function History() {
         }]
       : [];
 
+  const savingsRows: SavingsRow[] = savings.map((s) => ({
+    ...s,
+    _kind: "savings" as const,
+    goal_name: goalNames[s.goal_id] ?? "—",
+  }));
+
   const allItems: HistoryRow[] = [
     ...expenses.map((e): ExpenseRow => ({ ...e, _kind: "expense" })),
     ...incomes.map((i): IncomeRow => ({ ...i, _kind: "income" })),
     ...salaryRow,
+    ...savingsRows,
   ].sort((a, b) => b.date - a.date);
 
   const items =
@@ -83,7 +100,9 @@ export function History() {
       ? allItems.filter((r) => r._kind === "expense")
       : filter === "income"
         ? allItems.filter((r) => r._kind === "income" || r._kind === "salary")
-        : allItems;
+        : filter === "savings"
+          ? allItems.filter((r) => r._kind === "savings")
+          : allItems;
 
   const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0);
   const incomeTotal =
@@ -186,13 +205,20 @@ export function History() {
         <div style={{ padding: "0 22px 8px", display: "flex", gap: 8 }}>
           {(
             [
-              { id: "all", label: t("filterAll") },
+              { id: "all",      label: t("filterAll") },
               { id: "expenses", label: t("filterExpenses") },
-              { id: "income", label: t("filterIncome") },
+              { id: "income",   label: t("filterIncome") },
+              { id: "savings",  label: t("filterSavings") },
             ] as const
           ).map((f) => {
             const sel = f.id === filter;
-            const isIncome = f.id === "income";
+            const bg = sel
+              ? f.id === "income"
+                ? "var(--x-sage)"
+                : f.id === "savings"
+                  ? "var(--x-saffron, #E89B3A)"
+                  : "var(--x-ink)"
+              : "transparent";
             return (
               <button
                 key={f.id}
@@ -201,11 +227,7 @@ export function History() {
                   padding: "5px 14px",
                   borderRadius: 999,
                   border: sel ? "none" : "1px solid var(--x-line)",
-                  background: sel
-                    ? isIncome
-                      ? "var(--x-sage)"
-                      : "var(--x-ink)"
-                    : "transparent",
+                  background: bg,
                   color: sel ? "var(--x-paper)" : "var(--x-ink-3)",
                   fontSize: 12,
                   fontWeight: 600,
@@ -349,6 +371,62 @@ export function History() {
                           −{fmtN(row.amount)}
                         </div>
                         <Icon name="chevron-right" size={14} stroke={1.6} color="var(--x-ink-4)" />
+                      </div>
+                    );
+                  }
+
+                  // savings transfer row
+                  if (row._kind === "savings") {
+                    return (
+                      <div
+                        key={row.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "12px 14px",
+                          borderBottom:
+                            i < g.rows.length - 1
+                              ? "1px solid var(--x-line)"
+                              : "none",
+                          cursor: "default",
+                        }}
+                      >
+                        <div
+                          className="x-icon-circle"
+                          style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: 12,
+                            background: "rgba(232,155,58,0.15)",
+                            color: "var(--x-saffron, #E89B3A)",
+                          }}
+                        >
+                          <Icon name="goals" size={18} stroke={1.7} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 500,
+                              color: "var(--x-ink)",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {row.goal_name}
+                          </div>
+                          <div style={{ fontSize: 11, color: "var(--x-ink-3)", marginTop: 3 }}>
+                            {t("savingsWord")} · {row.goal_name}
+                          </div>
+                        </div>
+                        <div
+                          className="x-num"
+                          style={{ fontSize: 15, fontWeight: 600, color: "var(--x-saffron, #E89B3A)" }}
+                        >
+                          +{fmtN(row.amount)}
+                        </div>
                       </div>
                     );
                   }
