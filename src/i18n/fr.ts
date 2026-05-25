@@ -75,6 +75,7 @@ export const fr = {
   history: "Historique",
   byCategory: "Par catégorie",
   noExpenses: "Aucune dépense pour cette période",
+  noTransactions: "Aucune transaction pour cette période",
   total: "Total",
   delete: "Supprimer",
   expensesWord: "dépenses",
@@ -82,6 +83,16 @@ export const fr = {
   listTab: "Liste",
   categoriesTab: "Catégories",
   distribution: "Répartition",
+  totalIncome: "reçus",
+  salary: "Salaire",
+  fixedBadge: "Fixe",
+  filterAll: "Tout",
+  filterExpenses: "Dépenses",
+  filterIncome: "Revenus",
+
+  // income detail
+  incomeDetailTitle: "Modifier le revenu",
+  deleteIncomeTitle: "Supprimer ce revenu ?",
 
   // goals
   addGoal: "Nouvel objectif",

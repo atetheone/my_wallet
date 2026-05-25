@@ -286,6 +286,13 @@ export async function categoryBreakdown(
 
 // ---- extra income --------------------------------------------------------
 
+export interface ExtraIncome {
+  id: string;
+  date: number;
+  amount: XOF;
+  note: string | null;
+}
+
 export async function addExtraIncome(
   date: number,
   amount: XOF,
@@ -297,4 +304,38 @@ export async function addExtraIncome(
     [id, date, amount, note, Date.now()],
   );
   return id;
+}
+
+export async function listExtraIncome(limit = 200): Promise<ExtraIncome[]> {
+  return all<ExtraIncome>(
+    "SELECT id, date, amount, note FROM income_extra WHERE deleted = 0 ORDER BY date DESC LIMIT ?;",
+    [limit],
+  );
+}
+
+const INCOME_UPDATE_COLUMNS: ReadonlySet<keyof Omit<ExtraIncome, "id">> = new Set([
+  "date", "amount", "note",
+]);
+
+export async function updateExtraIncome(
+  id: string,
+  patch: Partial<Omit<ExtraIncome, "id">>,
+): Promise<void> {
+  const cols = (Object.keys(patch) as (keyof Omit<ExtraIncome, "id">)[]).filter(
+    (c) => INCOME_UPDATE_COLUMNS.has(c),
+  );
+  if (!cols.length) return;
+  const set = cols.map((c) => `${c} = ?`).join(", ");
+  const vals = cols.map((c) => (patch as Record<string, unknown>)[c] as never);
+  await run(
+    `UPDATE income_extra SET ${set}, updated_at = ? WHERE id = ?;`,
+    [...vals, Date.now(), id],
+  );
+}
+
+export async function deleteExtraIncome(id: string): Promise<void> {
+  await run(
+    "UPDATE income_extra SET deleted = 1, updated_at = ? WHERE id = ?;",
+    [Date.now(), id],
+  );
 }
