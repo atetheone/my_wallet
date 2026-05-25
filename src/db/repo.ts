@@ -3,7 +3,7 @@
  * soft deletes (`deleted = 1`) so the sync engine sees every change.
  */
 
-import { all, get, run } from "./sqlite";
+import { all, get, run, tx } from "./sqlite";
 import { periodFor } from "../lib/period";
 import type { XOF } from "../lib/money";
 
@@ -54,6 +54,14 @@ export interface Goal {
   target_date: number | null;
   allocation: number;
   saved: XOF;
+}
+
+export interface SavingsTransfer {
+  id: string;
+  date: number;
+  amount: XOF;
+  goal_id: string;
+  note: string | null;
 }
 
 // ---- settings ------------------------------------------------------------
@@ -211,10 +219,32 @@ export async function addGoal(g: Omit<Goal, "id" | "saved">): Promise<string> {
   return id;
 }
 
-export async function updateGoalSaved(id: string, saved: XOF): Promise<void> {
-  await run(
-    "UPDATE goals SET saved = ?, updated_at = ? WHERE id = ?;",
-    [saved, Date.now(), id],
+export async function topUpGoal(
+  goalId: string,
+  amount: XOF,
+  note: string | null = null,
+): Promise<void> {
+  const id = uid();
+  const now = Date.now();
+  await tx(async () => {
+    await run(
+      `INSERT INTO savings_transfers (id, date, amount, goal_id, note, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?);`,
+      [id, now, amount, goalId, note, now],
+    );
+    await run(
+      "UPDATE goals SET saved = saved + ?, updated_at = ? WHERE id = ?;",
+      [amount, now, goalId],
+    );
+  });
+}
+
+export async function listSavingsTransfers(limit = 200): Promise<SavingsTransfer[]> {
+  return all<SavingsTransfer>(
+    `SELECT id, date, amount, goal_id, note
+     FROM savings_transfers WHERE deleted = 0
+     ORDER BY date DESC LIMIT ?;`,
+    [limit],
   );
 }
 

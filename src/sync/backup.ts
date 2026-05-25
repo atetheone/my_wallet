@@ -14,6 +14,7 @@ export const SYNC_TABLES = [
   "income_extra",
   "fixed_costs",
   "goals",
+  "savings_transfers",
 ] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 
@@ -71,6 +72,9 @@ const TABLE_COLUMNS: Record<SyncTable, ReadonlySet<string>> = {
     "id", "name", "target_amount", "target_date", "allocation", "saved",
     "updated_at", "deleted",
   ]),
+  savings_transfers: new Set([
+    "id", "date", "amount", "goal_id", "note", "updated_at", "deleted",
+  ]),
 };
 
 /** Upsert a row only when the incoming `updated_at` is newer (LWW). */
@@ -106,12 +110,13 @@ const BackupSchema = z.object({
   version: z.literal(1),
   exportedAt: z.number(),
   tables: z.object({
-    settings:     z.array(rowShape),
-    categories:   z.array(rowShape),
-    expenses:     z.array(rowShape.extend({ date: z.number(), amount: z.number() })),
-    income_extra: z.array(rowShape),
-    fixed_costs:  z.array(rowShape),
-    goals:        z.array(rowShape),
+    settings:           z.array(rowShape),
+    categories:         z.array(rowShape),
+    expenses:           z.array(rowShape.extend({ date: z.number(), amount: z.number() })),
+    income_extra:       z.array(rowShape),
+    fixed_costs:        z.array(rowShape),
+    goals:              z.array(rowShape),
+    savings_transfers:  z.array(rowShape.extend({ date: z.number(), amount: z.number(), goal_id: z.string() })).optional(),
   }),
 });
 
