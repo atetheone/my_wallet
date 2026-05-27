@@ -400,11 +400,11 @@ button {
   }
 }
 
-/* ── floating action button ────────────────────────────────────── */
+/* ── floating action button (center of tab bar) ─────────────────── */
 .x-fab {
-  position: fixed;
-  bottom: calc(var(--x-tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px);
-  right: 20px;
+  position: relative;
+  margin-top: -24px;
+  flex-shrink: 0;
   z-index: 25;
   width: 56px;
   height: 56px;
