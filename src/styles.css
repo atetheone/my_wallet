@@ -284,6 +284,7 @@ button:focus-visible {
   display: flex;
   justify-content: space-around;
   align-items: center;
+  overflow: visible;
   z-index: 20;
 }
 .x-tab {
@@ -400,11 +401,17 @@ button {
   }
 }
 
-/* ── floating action button (center of tab bar) ─────────────────── */
-.x-fab {
-  position: relative;
-  margin-top: -24px;
+/* ── floating action button (half-out center of tab bar) ────────── */
+.x-fab-placeholder {
+  width: 56px;
   flex-shrink: 0;
+  pointer-events: none;
+}
+.x-fab {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
   z-index: 25;
   width: 56px;
   height: 56px;
@@ -420,7 +427,7 @@ button {
   transition: transform 0.1s ease;
 }
 .x-fab:active {
-  transform: scale(0.92);
+  transform: translate(-50%, -50%) scale(0.92);
 }
 
 /* boot / error fallback */

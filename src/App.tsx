@@ -146,6 +146,7 @@ export function App() {
               <span>{tab.label}</span>
             </button>
           ))}
+          <span className="x-fab-placeholder" aria-hidden="true" />
           <button
             className="x-fab"
             onClick={() => navigate("add")}
