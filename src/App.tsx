@@ -118,7 +118,6 @@ export function App() {
     );
 
   const fullscreen = route === "add";
-  const showFab = route === "home" || route === "history" || route === "goals";
 
   return (
     <div className={"app-shell" + (fullscreen ? " no-tabbar" : "")}>
@@ -130,18 +129,32 @@ export function App() {
         {route === "settings" && <Settings />}
         {route === "onboarding" && <Home />}
       </main>
-      {showFab && (
-        <button
-          className="x-fab"
-          onClick={() => navigate("add")}
-          aria-label={t("addExpense")}
-        >
-          <Icon name="plus" size={24} stroke={2.2} />
-        </button>
-      )}
       {!fullscreen && (
         <nav className="x-tabbar">
-          {TABS.map((tab) => (
+          {TABS.slice(0, 2).map((tab) => (
+            <button
+              key={tab.r}
+              className={"x-tab" + (route === tab.r ? " active" : "")}
+              onClick={() => navigate(tab.r)}
+              aria-label={tab.label}
+            >
+              <Icon
+                name={tab.icon}
+                size={22}
+                stroke={route === tab.r ? 1.9 : 1.5}
+              />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+          <span className="x-fab-placeholder" aria-hidden="true" />
+          <button
+            className="x-fab"
+            onClick={() => navigate("add")}
+            aria-label={t("addExpense")}
+          >
+            <Icon name="plus" size={24} stroke={2.2} />
+          </button>
+          {TABS.slice(2).map((tab) => (
             <button
               key={tab.r}
               className={"x-tab" + (route === tab.r ? " active" : "")}
