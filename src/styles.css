@@ -282,7 +282,7 @@ button:focus-visible {
   border-top: 1px solid var(--x-line);
   padding: 10px 8px calc(12px + env(safe-area-inset-bottom, 0px));
   display: flex;
-  justify-content: space-around;
+  justify-content: space-evenly;
   align-items: center;
   overflow: visible;
   z-index: 20;
@@ -403,7 +403,7 @@ button {
 
 /* ── floating action button (half-out center of tab bar) ────────── */
 .x-fab-placeholder {
-  width: 56px;
+  width: 40px;
   flex-shrink: 0;
   pointer-events: none;
 }
