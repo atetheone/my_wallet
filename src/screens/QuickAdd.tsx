@@ -18,7 +18,6 @@ export function QuickAdd() {
   const [note, setNote] = useState("");
   const [source, setSource] = useState("");
   const [busy, setBusy] = useState(false);
-  const [showOverspend, setShowOverspend] = useState(false);
 
   useEffect(() => {
     listCategories().then((c) => {
@@ -37,7 +36,6 @@ export function QuickAdd() {
     setAmount(0);
     setNote("");
     setSource("");
-    setShowOverspend(false);
   }
 
   async function saveExpense() {
@@ -71,12 +69,11 @@ export function QuickAdd() {
       saveIncome();
       return;
     }
-    const safe = snap?.safe.safeToSpend ?? 0;
-    if (amount > safe && safe > 0) {
-      setShowOverspend(true);
-    } else {
-      saveExpense();
-    }
+    // Overspending is allowed: an expense beyond the available balance simply
+    // pushes "reste à dépenser" negative — an amount to reimburse, not a block.
+    // The live "Restera …" line already shows the resulting (possibly negative)
+    // balance in clay before the user confirms.
+    saveExpense();
   }
 
   const safeToSpend = snap?.safe.safeToSpend ?? 0;
@@ -439,66 +436,6 @@ export function QuickAdd() {
           {mode === "income" ? t("validateIncome") : t("validateExpense")}
         </button>
       </div>
-
-      {/* overspend confirmation panel */}
-      {showOverspend && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 40,
-            display: "flex",
-            alignItems: "flex-end",
-            background: "rgba(26,22,17,0.42)",
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowOverspend(false);
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 480,
-              margin: "0 auto",
-              background: "var(--x-paper)",
-              borderRadius: "22px 22px 0 0",
-              padding: "24px 22px calc(28px + env(safe-area-inset-bottom,0px))",
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
-            <div className="x-display" style={{ fontSize: 18, fontWeight: 600 }}>
-              {t("overspendTitle")}
-            </div>
-            <div style={{ fontSize: 14, color: "var(--x-ink-2)", lineHeight: 1.5 }}>
-              {t("overspendBody").replace(
-                "{n}",
-                fmtN(amount - safeToSpend),
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                className="x-btn x-btn-ghost"
-                style={{ flex: 1 }}
-                onClick={() => setShowOverspend(false)}
-              >
-                {t("cancel")}
-              </button>
-              <button
-                className="x-btn"
-                style={{ flex: 1, background: "var(--x-clay)" }}
-                onClick={() => {
-                  setShowOverspend(false);
-                  saveExpense();
-                }}
-              >
-                {t("overspendConfirm")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -34,7 +34,7 @@ export const fr = {
   daysShort: "jours",
   until: "jusqu'au",
   inTheGreen: "↑ dans le vert",
-  overBudget: "↓ dépassé",
+  overBudget: "↓ à rembourser",
   spent: "Dépensé",
   budget: "Budget",
   greeting: "Bonsoir",
@@ -67,9 +67,6 @@ export const fr = {
   toggleIncome: "Revenu",
   incomeSource: "Source",
   incomeSourcePlaceholder: "Revenu variable",
-  overspendTitle: "Budget insuffisant",
-  overspendBody: "Cette dépense dépasse votre budget de {n} FCFA.",
-  overspendConfirm: "Enregistrer quand même",
 
   // history
   history: "Historique",
