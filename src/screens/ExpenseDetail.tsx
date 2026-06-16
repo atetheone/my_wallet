@@ -28,15 +28,24 @@ export function ExpenseDetail({ expense, onClose, onSaved }: Props) {
   const [cats, setCats] = useState<Category[]>([]);
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [fresh, setFresh] = useState(true);
 
   useEffect(() => {
     listCategories().then(setCats);
   }, []);
 
   function push(d: string) {
-    setAmount((a) => Math.min(a * (d === "000" ? 1000 : 10) + Number(d), 9_999_999));
+    if (fresh) {
+      setFresh(false);
+      setAmount(d === "000" ? 0 : Number(d));
+    } else {
+      setAmount((a) => Math.min(a * (d === "000" ? 1000 : 10) + Number(d), 9_999_999));
+    }
   }
-  const del = () => setAmount((a) => Math.floor(a / 10));
+  const del = () => {
+    if (fresh) { setFresh(false); setAmount(0); }
+    else setAmount((a) => Math.floor(a / 10));
+  };
 
   async function save() {
     setBusy(true);
@@ -122,7 +131,7 @@ export function ExpenseDetail({ expense, onClose, onSaved }: Props) {
           <div style={{ textAlign: "center", padding: "16px 12px 4px" }}>
             <div
               className="x-num"
-              style={{ fontSize: 52, fontWeight: 600, lineHeight: 1, letterSpacing: "-0.03em" }}
+              style={{ fontSize: 52, fontWeight: 600, lineHeight: 1, letterSpacing: "-0.03em", borderBottom: fresh ? "2px solid var(--x-ink-3)" : "2px solid transparent", display: "inline-block" }}
             >
               {fmtN(amount)}
               <span style={{ fontSize: 18, color: "var(--x-ink-3)", marginLeft: 6, fontWeight: 500 }}>FCFA</span>
