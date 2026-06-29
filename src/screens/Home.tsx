@@ -7,6 +7,7 @@ import { projectGoal } from "../lib/safeToSpend";
 import { navigate } from "../lib/router";
 import { catMeta } from "../ui/cats";
 import { Icon } from "../ui/Icon";
+import { HiddenAmount } from "../ui/HiddenAmount";
 import { t } from "../i18n";
 import { SetupWizard } from "./SetupWizard";
 
@@ -122,22 +123,32 @@ export function Home() {
               marginTop: 8,
             }}
           >
-            <span
-              className="x-num x-display"
-              style={{
+            <HiddenAmount
+              style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}
+              hiddenStyle={{
                 fontSize: 54,
                 fontWeight: 600,
                 lineHeight: 1,
-                color: neg ? "var(--x-clay)" : "var(--x-paper)",
+                color: "var(--x-paper)",
               }}
             >
-              {fmtN(safe.safeToSpend)}
-            </span>
-            <span
-              style={{ fontSize: 16, fontWeight: 500, color: "var(--x-ink-4)" }}
-            >
-              FCFA
-            </span>
+              <span
+                className="x-num x-display"
+                style={{
+                  fontSize: 54,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  color: neg ? "var(--x-clay)" : "var(--x-paper)",
+                }}
+              >
+                {fmtN(safe.safeToSpend)}
+              </span>
+              <span
+                style={{ fontSize: 16, fontWeight: 500, color: "var(--x-ink-4)" }}
+              >
+                FCFA
+              </span>
+            </HiddenAmount>
           </div>
 
           <div
@@ -173,8 +184,12 @@ export function Home() {
                   color: neg ? "var(--x-clay)" : "var(--x-saffron)",
                 }}
               >
-                {fmtN(safe.dailyAllowance)}{" "}
-                <span style={{ fontSize: 14, color: "var(--x-ink-4)" }}>FCFA</span>
+                <HiddenAmount
+                  hiddenStyle={{ fontSize: 28, fontWeight: 600, color: "var(--x-saffron)" }}
+                >
+                  {fmtN(safe.dailyAllowance)}{" "}
+                  <span style={{ fontSize: 14, color: "var(--x-ink-4)" }}>FCFA</span>
+                </HiddenAmount>
               </div>
               <div style={{ fontSize: 12, color: "var(--x-ink-4)", marginTop: 3 }}>
                 {t("until")} {snap.periodEndLabel} · {daysRemaining}{" "}

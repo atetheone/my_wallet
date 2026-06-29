@@ -9,6 +9,7 @@ import { syncConfigured, signInWithEmail, currentEmail } from "../sync/supabase"
 import { sync } from "../sync/engine";
 import { Icon, type IconName } from "../ui/Icon";
 import { Modal } from "../ui/Modal";
+import { HiddenAmount } from "../ui/HiddenAmount";
 import { t } from "../i18n";
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -35,6 +36,7 @@ function Row({
   icon,
   label,
   value,
+  valueNode,
   danger,
   last,
   onClick,
@@ -42,6 +44,7 @@ function Row({
   icon: IconName;
   label: string;
   value?: string;
+  valueNode?: React.ReactNode;
   danger?: boolean;
   last?: boolean;
   onClick?: () => void;
@@ -86,9 +89,9 @@ function Row({
       >
         {label}
       </span>
-      {value && (
+      {valueNode ?? (value && (
         <span style={{ fontSize: 13, color: "var(--x-ink-3)" }}>{value}</span>
-      )}
+      ))}
       {!danger && (
         <Icon
           name="chevron-right"
@@ -270,7 +273,13 @@ export function Settings() {
                 <Row
                   icon="mail"
                   label={t("obIncome")}
-                  value={`${fmtN(snap?.settings.fixed_income ?? 0)} FCFA`}
+                  valueNode={
+                    <HiddenAmount hiddenStyle={{ fontSize: 13, color: "var(--x-ink-3)" }}>
+                      <span style={{ fontSize: 13, color: "var(--x-ink-3)" }}>
+                        {fmtN(snap?.settings.fixed_income ?? 0)} FCFA
+                      </span>
+                    </HiddenAmount>
+                  }
                   onClick={() => setEditing(true)}
                 />
                 <Row

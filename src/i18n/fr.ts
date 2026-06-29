@@ -165,6 +165,10 @@ export const fr = {
   // backup
   backupInvalid: "Fichier de sauvegarde invalide",
 
+  // confidentiality
+  tapToReveal: "Appuyer pour afficher",
+  revealPin: "Code de confidentialité",
+
   // modals
   confirm: "Confirmer",
   topUpTitle: "Ajouter au pot",
