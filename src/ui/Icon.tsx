@@ -34,7 +34,8 @@ export type IconName =
   | "mail"
   | "close"
   | "backspace"
-  | "income";
+  | "income"
+  | "eye";
 
 export function Icon({
   name,
@@ -288,6 +289,13 @@ export function Icon({
         <svg {...p}>
           <path d="M12 19V5M5 12l7-7 7 7" />
           <path d="M5 19h14" />
+        </svg>
+      );
+    case "eye":
+      return (
+        <svg {...p}>
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+          <circle cx="12" cy="12" r="2.6" fill={color} />
         </svg>
       );
     default:
