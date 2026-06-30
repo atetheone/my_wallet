@@ -9,6 +9,7 @@ import { syncConfigured, signInWithEmail, currentEmail } from "../sync/supabase"
 import { sync } from "../sync/engine";
 import { Icon, type IconName } from "../ui/Icon";
 import { Modal } from "../ui/Modal";
+import { PinRevealModal } from "../ui/PinRevealModal";
 import { t } from "../i18n";
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -35,6 +36,7 @@ function Row({
   icon,
   label,
   value,
+  valueNode,
   danger,
   last,
   onClick,
@@ -42,6 +44,7 @@ function Row({
   icon: IconName;
   label: string;
   value?: string;
+  valueNode?: React.ReactNode;
   danger?: boolean;
   last?: boolean;
   onClick?: () => void;
@@ -86,9 +89,9 @@ function Row({
       >
         {label}
       </span>
-      {value && (
+      {valueNode ?? (value && (
         <span style={{ fontSize: 13, color: "var(--x-ink-3)" }}>{value}</span>
-      )}
+      ))}
       {!danger && (
         <Icon
           name="chevron-right"
@@ -102,7 +105,7 @@ function Row({
 }
 
 export function Settings() {
-  const { snap, reload } = useStore();
+  const { snap, reload, sensitiveVisible, showSensitive } = useStore();
   const file = useRef<HTMLInputElement>(null);
   const [income, setIncome] = useState("");
   const [salaryDay, setSalaryDay] = useState("");
@@ -113,6 +116,7 @@ export function Settings() {
   const [editing, setEditing] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
   const [pinVal, setPinVal] = useState("");
+  const [incomeRevealOpen, setIncomeRevealOpen] = useState(false);
 
   useEffect(() => {
     if (snap) {
@@ -270,8 +274,47 @@ export function Settings() {
                 <Row
                   icon="mail"
                   label={t("obIncome")}
-                  value={`${fmtN(snap?.settings.fixed_income ?? 0)} FCFA`}
-                  onClick={() => setEditing(true)}
+                  valueNode={
+                    sensitiveVisible ? (
+                      <span style={{ fontSize: 13, color: "var(--x-ink-3)" }}>
+                        {fmtN(snap?.settings.fixed_income ?? 0)} FCFA
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          color: "var(--x-ink-3)",
+                        }}
+                      >
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          {Array.from({ length: 8 }).map((_, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: "currentColor",
+                                display: "inline-block",
+                              }}
+                            />
+                          ))}
+                        </span>
+                        <Icon name="eye" size={14} stroke={1.7} color="currentColor" />
+                      </span>
+                    )
+                  }
+                  onClick={() => {
+                    if (sensitiveVisible) {
+                      setEditing(true);
+                    } else if (snap?.settings.pin_hash) {
+                      setIncomeRevealOpen(true);
+                    } else {
+                      showSensitive();
+                    }
+                  }}
                 />
                 <Row
                   icon="calendar"
@@ -456,6 +499,11 @@ export function Settings() {
           onChange={(e) => setPinVal(e.target.value.replace(/[^\d]/g, ""))}
         />
       </Modal>
+
+      <PinRevealModal
+        open={incomeRevealOpen}
+        onClose={() => setIncomeRevealOpen(false)}
+      />
     </div>
   );
 }

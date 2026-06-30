@@ -50,6 +50,9 @@ interface Store {
   unlocked: boolean;
   unlock: () => void;
   reload: () => Promise<void>;
+  sensitiveVisible: boolean;
+  showSensitive: () => void;
+  hideSensitive: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -118,6 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [unlocked, setUnlocked] = useState(false);
+  const [sensitiveVisible, setSensitiveVisible] = useState(false);
 
   async function load(): Promise<Snapshot> {
     const settings = await getSettings();
@@ -190,6 +194,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         unlocked,
         unlock: () => setUnlocked(true),
         reload,
+        sensitiveVisible,
+        showSensitive: () => setSensitiveVisible(true),
+        hideSensitive: () => setSensitiveVisible(false),
       }}
     >
       {children}
