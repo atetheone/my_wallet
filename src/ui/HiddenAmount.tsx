@@ -27,11 +27,29 @@ export function HiddenAmount({
   dotSize = 8,
   dotCount = 8,
 }: HiddenAmountProps) {
-  const { sensitiveVisible, showSensitive, snap } = useStore();
+  const { sensitiveVisible, showSensitive, hideSensitive, snap } = useStore();
   const [pinOpen, setPinOpen] = useState(false);
 
   if (sensitiveVisible) {
-    return <span style={style}>{children}</span>;
+    return (
+      <button
+        onClick={hideSensitive}
+        title={t("tapToHide")}
+        style={{
+          background: "none",
+          border: "none",
+          padding: 0,
+          margin: 0,
+          cursor: "pointer",
+          font: "inherit",
+          color: "inherit",
+          textAlign: "inherit",
+          ...style,
+        }}
+      >
+        {children}
+      </button>
+    );
   }
 
   function handleTap() {

@@ -167,6 +167,7 @@ export const fr = {
 
   // confidentiality
   tapToReveal: "Appuyer pour afficher",
+  tapToHide: "Appuyer pour masquer",
   revealPin: "Code de confidentialité",
 
   // modals

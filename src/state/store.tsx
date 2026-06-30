@@ -52,6 +52,7 @@ interface Store {
   reload: () => Promise<void>;
   sensitiveVisible: boolean;
   showSensitive: () => void;
+  hideSensitive: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -195,6 +196,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         reload,
         sensitiveVisible,
         showSensitive: () => setSensitiveVisible(true),
+        hideSensitive: () => setSensitiveVisible(false),
       }}
     >
       {children}
